@@ -31,20 +31,28 @@ const toApiError = (error: unknown): ApiError => {
   };
 };
 
-const getAuthHeaders = () => {
+const getTenantHeaders = () => {
   const session = sessionStore.getState();
-  return {
-    Authorization: session.token ? `Bearer ${session.token}` : "",
-    "X-Tenant": session.workspace ?? "",
+  const headers: Record<string, string> = {
     Accept: "application/json",
   };
+
+  if (session.token) {
+    headers.Authorization = `Bearer ${session.token}`;
+  }
+
+  if (session.workspace) {
+    headers["X-Tenant"] = session.workspace;
+  }
+
+  return headers;
 };
 
 const request = async <T>(path: string, options: RequestOptions = {}): Promise<ApiResponse<T>> => {
   const url = `${API_CONFIG.baseUrl}${path}`;
 
   const headers: Record<string, string> = {
-    ...getAuthHeaders(),
+    ...getTenantHeaders(),
     ...options.headers,
   };
 

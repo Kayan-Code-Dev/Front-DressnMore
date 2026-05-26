@@ -59,18 +59,28 @@ All migrated screens in Batch 1 + Batch 2 + Batch 3 use mock services only.
 - No old API service directories were imported.
 - No legacy auth/websocket/base-url logic was restored.
 
-## Old API files not copied
+## Architecture/API readiness review outcome
 
-No legacy `src/api/*` or `api/v2/*` services were copied into feature modules.
+### Issues found
+1. HTTP client header behavior needed normalization for empty session values.
+2. Route-level permission guard enforcement is not yet implemented (nav-level permission filtering is implemented).
+3. Backend lookups are still placeholders by design.
+
+### Issues fixed
+- HTTP client now conditionally sends `Authorization` and `X-Tenant` only when values exist.
+
+### Issues deferred
+- Route-level permission guard enforcement deferred to API integration phase.
+- Lookup endpoint wiring deferred until backend freeze.
 
 ## Integration readiness notes
 
-- Routes and sidebar navigation now cover the main tenant UI surface.
+- Routes and sidebar navigation cover the main tenant UI surface.
 - Feature-level `types + mocks + mock services + pages` is consistently implemented.
 - Batch 1/2/3 modules are integration-ready to switch to real APIs progressively once backend contracts are frozen.
 
-## Next phase recommendation after Batch 3
+## Next phase recommendation after review
 
-1. Start controlled API integration for Batch 1 modules first (auth/dashboard/customers/dresses/invoices).
-2. Keep Batch 2/3 on mocks until endpoint freeze for each module is confirmed.
-3. Migrate remaining advanced operational screens (inventory/tailoring/workshop) with same mock-first pattern.
+1. Begin controlled API integration for high-priority modules (auth/dashboard/customers/dresses/invoices).
+2. Keep remaining modules on mocks until endpoint freeze per module.
+3. Add route-level permission guard when permission contract is frozen.

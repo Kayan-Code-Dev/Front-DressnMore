@@ -5,7 +5,15 @@
 - Phase 2 foundation: completed.
 - Migration Batch 2 screens: completed.
 - Migration Batch 3 screens: completed.
+- Architecture/API readiness review: completed.
 - Status: **mock services only**.
+
+## Review-based architecture notes
+
+- Shared API types are in place and aligned with expected backend envelope.
+- HTTP client is prepared and tenant-aware.
+- Header consistency fix applied: `Authorization` and `X-Tenant` are now sent only when session values exist.
+- Route-level permission enforcement is deferred; current gating is auth + nav permission visibility.
 
 ## When real API integration starts
 
@@ -26,8 +34,9 @@ Real integration should start only after:
 - Success/error response formats are frozen.
 - Pagination contract is frozen (`current_page`, `per_page`, `total`, `last_page`, optional `total_pages`).
 - Status enums and action transitions are frozen per module.
+- Lookup endpoints are frozen for branches/categories/cashboxes/users/filters.
 
-## Integration readiness after Batch 3
+## Integration readiness after Batch 3 + review
 
 Ready modules for progressive integration:
 
@@ -73,3 +82,4 @@ Ready modules for progressive integration:
 - Use shared `httpClient` and `ApiResponse` contracts for all modules.
 - Validate each module against backend envelope before moving to the next module.
 - Keep fallback mock fixtures for local UI verification during rollout.
+- Add route-level permission guards when backend permission matrix is finalized.
