@@ -10,8 +10,13 @@ export function DressesPage() {
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<DressItem[]>([]);
 
-  useEffect(() => {
+
+  const handleSearchChange = (value: string) => {
     setLoading(true);
+    setSearch(value);
+  };
+
+  useEffect(() => {
     listDressesMock(search)
       .then((response) => setRows(response.data))
       .finally(() => setLoading(false));
@@ -41,7 +46,7 @@ export function DressesPage() {
 
       <SearchFiltersBar
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={handleSearchChange}
         searchPlaceholder="Search dresses"
         rightSlot={
           <>

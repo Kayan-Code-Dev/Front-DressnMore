@@ -10,8 +10,13 @@ export function CustomersPage() {
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<CustomerItem[]>([]);
 
-  useEffect(() => {
+
+  const handleSearchChange = (value: string) => {
     setLoading(true);
+    setSearch(value);
+  };
+
+  useEffect(() => {
     listCustomersMock(search)
       .then((response) => setRows(response.data))
       .finally(() => setLoading(false));
@@ -41,7 +46,7 @@ export function CustomersPage() {
 
       <SearchFiltersBar
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={handleSearchChange}
         searchPlaceholder="Search customers"
         rightSlot={
           <>

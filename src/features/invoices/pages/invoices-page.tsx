@@ -10,8 +10,13 @@ export function InvoicesPage() {
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<InvoiceItem[]>([]);
 
-  useEffect(() => {
+
+  const handleSearchChange = (value: string) => {
     setLoading(true);
+    setSearch(value);
+  };
+
+  useEffect(() => {
     listInvoicesMock(search)
       .then((response) => setRows(response.data))
       .finally(() => setLoading(false));
@@ -50,7 +55,7 @@ export function InvoicesPage() {
 
       <SearchFiltersBar
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={handleSearchChange}
         searchPlaceholder="Search invoices"
         rightSlot={
           <>
