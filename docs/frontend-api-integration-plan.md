@@ -6,6 +6,7 @@
 - Migration Batch 2 screens: completed.
 - Migration Batch 3 screens: completed.
 - Architecture/API readiness review: completed.
+- Frontend ↔ backend reconciliation: completed (documentation-only phase).
 - Status: **mock services only**.
 
 ## Review-based architecture notes
@@ -36,50 +37,58 @@ Real integration should start only after:
 - Status enums and action transitions are frozen per module.
 - Lookup endpoints are frozen for branches/categories/cashboxes/users/filters.
 
-## Integration readiness after Batch 3 + review
+## Final reconciliation status
 
-Ready modules for progressive integration:
+Reconciliation source:
+- `docs/frontend-api-readiness-matrix.md`
+- `docs/frontend-backend-reconciliation.md`
 
-1. Auth (login/session)
-2. Dashboard
+Status buckets:
+- **ready_to_integrate:** auth, customers, categories, subcategories, branches, dresses, invoices, deliveries, returns, expenses, cash movements, suppliers.
+- **backend_partial:** payments, overdue returns, cashboxes, purchase orders, supplier payments.
+- **backend_deferred:** dashboard, reports, accounting, settings.
+- **frontend_adjustment_needed:** lookups orchestration/caching and module swap pattern hardening.
+
+## Final recommended integration order (do not start yet)
+
+This is the approved order to use once real API integration starts:
+
+1. Auth / Session
+2. Lookups
 3. Customers
-4. Dresses
-5. Invoices
-6. Categories
-7. Subcategories
-8. Branches
-9. Deliveries
-10. Returns
-11. Overdue Returns
-12. Payments
-13. Cashboxes
-14. Expenses
-15. Cash Movements
-16. Suppliers
-17. Purchase Orders
-18. Supplier Payments
-19. Reports (sales/tailoring)
-20. Accounting summary
-21. Account settings
+4. Categories / Subcategories
+5. Branches
+6. Dresses
+7. Invoices
+8. Payments
+9. Delivery / Returns
+10. Expenses
+11. Cash movements / Cashboxes
+12. Suppliers / Purchase Orders / Supplier Payments
 
-## Suggested integration order
+## Deferred modules
 
-1. Auth (login + session bootstrapping)
-2. Dashboard
-3. Customers + Dresses + Invoices
-4. Categories + Subcategories + Branches
-5. Deliveries + Returns + Overdue Returns
-6. Payments + Cashboxes + Expenses + Cash Movements
-7. Suppliers + Purchase Orders + Supplier Payments
-8. Reports + Accounting summary
-9. Account settings
-10. Remaining advanced modules (inventory/tailoring/workshop)
+The following modules stay mock-only for now:
+
+- Dashboard
+- Reports
+- Accounting
+- Full settings/account management beyond basic profile scope
+- Any module/action explicitly marked `backend_partial` or `backend_deferred` in reconciliation until backend confirmation is complete
+
+## Frontend adjustments required before real integration
+
+1. Implement route-level permission guard enforcement (currently deferred; nav is permission-aware but routes are auth-gated only).
+2. Define and implement shared lookup wiring strategy (preload, cache, invalidation, and fallback).
+3. Add a shared export/download helper for binary/file responses (`blob` handling, filename parsing, error fallback).
+4. Add pagination adapter safeguards for backend meta shape differences (`total_pages` vs `last_page`, naming drift).
+5. Standardize service swap pattern per module (`*.mock.service.ts` -> `*.api.service.ts`) with identical method signatures.
 
 ## Integration strategy
 
-- Replace each mock service with real service one module at a time.
+- Do not connect real endpoints in this phase.
+- Replace each mock service with real service one module at a time only when integration phase officially starts.
 - Keep feature-level service boundaries unchanged.
 - Use shared `httpClient` and `ApiResponse` contracts for all modules.
 - Validate each module against backend envelope before moving to the next module.
 - Keep fallback mock fixtures for local UI verification during rollout.
-- Add route-level permission guards when backend permission matrix is finalized.
