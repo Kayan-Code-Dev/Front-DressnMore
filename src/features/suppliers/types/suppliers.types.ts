@@ -18,3 +18,14 @@ export type PurchaseOrderItem = {
   remaining_amount: number;
   order_date: string;
 };
+
+export type SupplierPaymentItem = {
+  id: number;
+  supplier: string;
+  purchase_order_number: string;
+  amount: number;
+  method: "cash" | "bank_transfer" | "check";
+  reference: string;
+  paid_at: string;
+  notes: string;
+};

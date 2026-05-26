@@ -1,1 +1,1 @@
-export { listSuppliersMock, listPurchaseOrdersMock } from "@/features/suppliers/services/suppliers.mock.service";
+export { listSuppliersMock, listPurchaseOrdersMock, listSupplierPaymentsMock } from "@/features/suppliers/services/suppliers.mock.service";

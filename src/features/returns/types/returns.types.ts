@@ -8,3 +8,15 @@ export type ReturnItem = {
   return_date: string;
   status: "requested" | "returned";
 };
+
+export type OverdueReturnItem = {
+  id: number;
+  customer: string;
+  invoice_number: string;
+  item: string;
+  delivery_date: string;
+  expected_return_date: string;
+  overdue_days: number;
+  amount: number;
+  status: "overdue" | "contacted" | "returned";
+};

@@ -20,16 +20,25 @@
 13. Suppliers (`/suppliers`)
 14. Purchase Orders (`/purchase-orders`)
 
-## Pending screens after Batch 2
+### Batch 3 (completed)
+15. Payments (`/payments`)
+16. Cashboxes (`/cashboxes`)
+17. Supplier Payments (`/supplier-payments`)
+18. Overdue Returns (`/overdue-returns`)
+19. Reports landing (`/reports`)
+20. Sales Reports (`/reports/sales`)
+21. Tailoring Reports (`/reports/tailoring`)
+22. Accounting Summary (`/accounting`)
+23. Account Settings (`/settings/account`)
 
-- Reports
-- Settings
-- HR-related modules
+## Pending screens after Batch 3
+
 - Inventory advanced operations pages
-- Payments dedicated screen
-- Tailoring dedicated screens
+- Tailoring transactional screens (full flow)
 - Notifications
 - Factory/workshop flows
+- Additional settings modules (beyond account settings)
+- Any remaining tenant operational screens not yet migrated
 
 ## Shared UI/components migrated or built
 
@@ -44,7 +53,7 @@
 
 ## Mock-only confirmation
 
-All migrated screens in Batch 1 + Batch 2 use mock services only.
+All migrated screens in Batch 1 + Batch 2 + Batch 3 use mock services only.
 
 - No real API calls were introduced.
 - No old API service directories were imported.
@@ -56,13 +65,12 @@ No legacy `src/api/*` or `api/v2/*` services were copied into feature modules.
 
 ## Integration readiness notes
 
-- Routes and nav are now in place for core operations modules.
-- Feature-level `types + mocks + mock services + pages` structure is in place.
-- Modules are ready to switch from mock services to real services one module at a time once backend contracts are frozen.
+- Routes and sidebar navigation now cover the main tenant UI surface.
+- Feature-level `types + mocks + mock services + pages` is consistently implemented.
+- Batch 1/2/3 modules are integration-ready to switch to real APIs progressively once backend contracts are frozen.
 
-## Next recommended migration batch
+## Next phase recommendation after Batch 3
 
-1. Reports and settings pages (UI + mocks)
-2. Payments dedicated page migration
-3. Tailoring pages migration
-4. Inventory advanced pages migration
+1. Start controlled API integration for Batch 1 modules first (auth/dashboard/customers/dresses/invoices).
+2. Keep Batch 2/3 on mocks until endpoint freeze for each module is confirmed.
+3. Migrate remaining advanced operational screens (inventory/tailoring/workshop) with same mock-first pattern.

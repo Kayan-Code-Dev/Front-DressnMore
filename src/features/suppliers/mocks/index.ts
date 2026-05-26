@@ -1,1 +1,1 @@
-export { suppliersFixture, purchaseOrdersFixture } from "@/features/suppliers/mocks/suppliers.mock";
+export { suppliersFixture, purchaseOrdersFixture, supplierPaymentsFixture } from "@/features/suppliers/mocks/suppliers.mock";

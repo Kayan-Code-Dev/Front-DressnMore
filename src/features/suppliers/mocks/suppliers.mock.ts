@@ -1,4 +1,8 @@
-import type { PurchaseOrderItem, SupplierItem } from "@/features/suppliers/types/suppliers.types";
+import type {
+  PurchaseOrderItem,
+  SupplierItem,
+  SupplierPaymentItem,
+} from "@/features/suppliers/types/suppliers.types";
 
 export const suppliersFixture: SupplierItem[] = [
   {
@@ -60,5 +64,28 @@ export const purchaseOrdersFixture: PurchaseOrderItem[] = [
     paid_amount: 6000,
     remaining_amount: 0,
     order_date: "2026-06-05",
+  },
+];
+
+export const supplierPaymentsFixture: SupplierPaymentItem[] = [
+  {
+    id: 1,
+    supplier: "Golden Fabrics",
+    purchase_order_number: "PO-1001",
+    amount: 6000,
+    method: "bank_transfer",
+    reference: "TXN-8701",
+    paid_at: "2026-06-02",
+    notes: "First transfer",
+  },
+  {
+    id: 2,
+    supplier: "Royal Threads",
+    purchase_order_number: "PO-1002",
+    amount: 3000,
+    method: "cash",
+    reference: "CASH-112",
+    paid_at: "2026-06-04",
+    notes: "Partial payment",
   },
 ];

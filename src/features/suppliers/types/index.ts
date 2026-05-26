@@ -1,1 +1,1 @@
-export type { SupplierItem, PurchaseOrderItem } from "@/features/suppliers/types/suppliers.types";
+export type { SupplierItem, PurchaseOrderItem, SupplierPaymentItem } from "@/features/suppliers/types/suppliers.types";
