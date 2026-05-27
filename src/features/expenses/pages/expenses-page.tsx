@@ -1,25 +1,61 @@
 import { useEffect, useMemo, useState } from "react";
 import { SearchFiltersBar } from "@/shared/components/filters/search-filters-bar";
 import { DataTable, type DataTableColumn } from "@/shared/components/data-table/data-table";
+import { Pagination } from "@/shared/components/data-table/pagination";
 import { Button } from "@/shared/ui/button";
+import { isModuleLive } from "@/config/feature-flags";
 import type { ExpenseItem } from "@/features/expenses/types/expenses.types";
 import { listExpensesMock } from "@/features/expenses/services/expenses.mock.service";
+import { listExpenses } from "@/features/expenses/services/expenses.api.service";
+
+function fetchExpenseData(searchTerm: string, currentPage: number) {
+  if (isModuleLive("expenses")) {
+    return listExpenses({ search: searchTerm, page: currentPage, per_page: 15 });
+  }
+  return listExpensesMock(searchTerm);
+}
 
 export function ExpensesPage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<ExpenseItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const handleSearchChange = (value: string) => {
     setLoading(true);
     setSearch(value);
+    setPage(1);
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setLoading(true);
+    setPage(nextPage);
   };
 
   useEffect(() => {
-    listExpensesMock(search)
-      .then((response) => setRows(response.data))
-      .finally(() => setLoading(false));
-  }, [search]);
+    let cancelled = false;
+
+    fetchExpenseData(search, page)
+      .then((response) => {
+        if (cancelled) return;
+        setRows(response.data);
+        const meta = response.meta as { last_page?: number } | null | undefined;
+        setTotalPages(meta?.last_page ?? 1);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load expenses");
+        setRows([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [search, page]);
 
   const columns = useMemo<DataTableColumn<ExpenseItem>[]>(
     () => [
@@ -54,7 +90,6 @@ export function ExpensesPage() {
     <section>
       <div className="page-title">
         <h2>Expenses</h2>
-        <p>Expenses list with filters placeholders and action placeholders.</p>
       </div>
 
       <SearchFiltersBar
@@ -75,6 +110,8 @@ export function ExpensesPage() {
         }
       />
 
+      {error ? <p className="form-error">{error}</p> : null}
+
       <DataTable
         columns={columns}
         rows={rows}
@@ -83,6 +120,10 @@ export function ExpensesPage() {
         emptyDescription="No expense matches current search."
         rowKey={(row) => String(row.id)}
       />
+
+      {!loading && totalPages > 1 ? (
+        <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+      ) : null}
     </section>
   );
 }
