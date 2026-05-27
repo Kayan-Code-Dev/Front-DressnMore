@@ -1,26 +1,61 @@
 import { useEffect, useMemo, useState } from "react";
 import { SearchFiltersBar } from "@/shared/components/filters/search-filters-bar";
 import { DataTable, type DataTableColumn } from "@/shared/components/data-table/data-table";
+import { Pagination } from "@/shared/components/data-table/pagination";
 import { Button } from "@/shared/ui/button";
+import { isModuleLive } from "@/config/feature-flags";
 import { listInvoicesMock } from "@/features/invoices/services/invoices.mock.service";
+import { listInvoices } from "@/features/invoices/services/invoices.api.service";
 import type { InvoiceItem } from "@/features/invoices/types/invoices.types";
+
+function fetchInvoiceData(searchTerm: string, currentPage: number) {
+  if (isModuleLive("invoices")) {
+    return listInvoices({ search: searchTerm, page: currentPage, per_page: 15 });
+  }
+  return listInvoicesMock(searchTerm);
+}
 
 export function InvoicesPage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<InvoiceItem[]>([]);
-
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const handleSearchChange = (value: string) => {
     setLoading(true);
     setSearch(value);
+    setPage(1);
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setLoading(true);
+    setPage(nextPage);
   };
 
   useEffect(() => {
-    listInvoicesMock(search)
-      .then((response) => setRows(response.data))
-      .finally(() => setLoading(false));
-  }, [search]);
+    let cancelled = false;
+
+    fetchInvoiceData(search, page)
+      .then((response) => {
+        if (cancelled) return;
+        setRows(response.data);
+        const meta = response.meta as { last_page?: number } | null | undefined;
+        setTotalPages(meta?.last_page ?? 1);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load invoices");
+        setRows([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [search, page]);
 
   const columns = useMemo<DataTableColumn<InvoiceItem>[]>(
     () => [
@@ -50,7 +85,6 @@ export function InvoicesPage() {
     <section>
       <div className="page-title">
         <h2>Invoices</h2>
-        <p>Core invoices list migrated with status/type placeholders.</p>
       </div>
 
       <SearchFiltersBar
@@ -69,6 +103,8 @@ export function InvoicesPage() {
         }
       />
 
+      {error ? <p className="form-error">{error}</p> : null}
+
       <DataTable
         columns={columns}
         rows={rows}
@@ -77,6 +113,10 @@ export function InvoicesPage() {
         emptyDescription="No matching invoices for the current search."
         rowKey={(row) => String(row.id)}
       />
+
+      {!loading && totalPages > 1 ? (
+        <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+      ) : null}
     </section>
   );
 }
