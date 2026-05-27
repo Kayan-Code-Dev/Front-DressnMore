@@ -10,6 +10,7 @@ export const API_CONFIG = Object.freeze({
     tenantLogin: `${TENANT_PREFIX}/login`,
     tenantMe: `${TENANT_PREFIX}/me`,
     tenantLogout: `${TENANT_PREFIX}/logout`,
+    tenantLookups: `${TENANT_PREFIX}/lookups`,
   },
 });
 
