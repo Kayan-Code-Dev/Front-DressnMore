@@ -1,25 +1,61 @@
 import { useEffect, useMemo, useState } from "react";
 import { SearchFiltersBar } from "@/shared/components/filters/search-filters-bar";
 import { DataTable, type DataTableColumn } from "@/shared/components/data-table/data-table";
+import { Pagination } from "@/shared/components/data-table/pagination";
 import { Button } from "@/shared/ui/button";
+import { isModuleLive } from "@/config/feature-flags";
 import type { PaymentItem } from "@/features/payments/types/payments.types";
 import { listPaymentsMock } from "@/features/payments/services/payments.mock.service";
+import { listPayments } from "@/features/payments/services/payments.api.service";
+
+function fetchPaymentData(searchTerm: string, currentPage: number) {
+  if (isModuleLive("payments")) {
+    return listPayments({ search: searchTerm, page: currentPage, per_page: 15 });
+  }
+  return listPaymentsMock(searchTerm);
+}
 
 export function PaymentsPage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<PaymentItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const handleSearchChange = (value: string) => {
     setLoading(true);
     setSearch(value);
+    setPage(1);
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setLoading(true);
+    setPage(nextPage);
   };
 
   useEffect(() => {
-    listPaymentsMock(search)
-      .then((response) => setRows(response.data))
-      .finally(() => setLoading(false));
-  }, [search]);
+    let cancelled = false;
+
+    fetchPaymentData(search, page)
+      .then((response) => {
+        if (cancelled) return;
+        setRows(response.data);
+        const meta = response.meta as { last_page?: number } | null | undefined;
+        setTotalPages(meta?.last_page ?? 1);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load payments");
+        setRows([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [search, page]);
 
   const columns = useMemo<DataTableColumn<PaymentItem>[]>(
     () => [
@@ -55,7 +91,6 @@ export function PaymentsPage() {
     <section>
       <div className="page-title">
         <h2>Payments</h2>
-        <p>Payments list migrated with mock-only filters and action placeholders.</p>
       </div>
 
       <SearchFiltersBar
@@ -75,6 +110,8 @@ export function PaymentsPage() {
         }
       />
 
+      {error ? <p className="form-error">{error}</p> : null}
+
       <DataTable
         columns={columns}
         rows={rows}
@@ -83,6 +120,10 @@ export function PaymentsPage() {
         emptyDescription="No payment matches current filters."
         rowKey={(row) => String(row.id)}
       />
+
+      {!loading && totalPages > 1 ? (
+        <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+      ) : null}
     </section>
   );
 }
