@@ -8,6 +8,8 @@ export const API_CONFIG = Object.freeze({
   timeoutMs: 15_000,
   endpoints: {
     tenantLogin: `${TENANT_PREFIX}/login`,
+    tenantMe: `${TENANT_PREFIX}/me`,
+    tenantLogout: `${TENANT_PREFIX}/logout`,
   },
 });
 
