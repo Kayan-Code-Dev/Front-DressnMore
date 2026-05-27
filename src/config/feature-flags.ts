@@ -33,7 +33,7 @@ export const featureFlags = {
     invoices: false,
     categories: true,
     subcategories: true,
-    branches: false,
+    branches: true,
     deliveries: false,
     returns: false,
     payments: false,
