@@ -1,5 +1,6 @@
 export type ModuleName =
   | "auth"
+  | "lookups"
   | "dashboard"
   | "customers"
   | "dresses"
@@ -25,6 +26,7 @@ export const featureFlags = {
 
   modules: {
     auth: true,
+    lookups: true,
     dashboard: false,
     customers: false,
     dresses: false,
