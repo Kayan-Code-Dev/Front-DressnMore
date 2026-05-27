@@ -9,3 +9,9 @@ export type BranchItem = {
   vat: string;
   status: "active" | "inactive";
 };
+
+export type BranchFilterParams = {
+  status?: string;
+  city_id?: number;
+  currency_id?: number;
+};

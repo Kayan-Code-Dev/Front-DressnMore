@@ -1,27 +1,63 @@
 import { useEffect, useMemo, useState } from "react";
 import { DataTable, type DataTableColumn } from "@/shared/components/data-table/data-table";
+import { Pagination } from "@/shared/components/data-table/pagination";
 import { SearchFiltersBar } from "@/shared/components/filters/search-filters-bar";
 import { Dialog } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
+import { isModuleLive } from "@/config/feature-flags";
 import type { BranchItem } from "@/features/branches/types/branches.types";
 import { listBranchesMock } from "@/features/branches/services/branches.mock.service";
+import { listBranches } from "@/features/branches/services/branches.api.service";
+
+function fetchBranchData(searchTerm: string, currentPage: number) {
+  if (isModuleLive("branches")) {
+    return listBranches({ search: searchTerm, page: currentPage, per_page: 15 });
+  }
+  return listBranchesMock(searchTerm);
+}
 
 export function BranchesPage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<BranchItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [dialog, setDialog] = useState<null | "create" | "edit" | "delete">(null);
 
   const handleSearchChange = (value: string) => {
     setLoading(true);
     setSearch(value);
+    setPage(1);
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setLoading(true);
+    setPage(nextPage);
   };
 
   useEffect(() => {
-    listBranchesMock(search)
-      .then((response) => setRows(response.data))
-      .finally(() => setLoading(false));
-  }, [search]);
+    let cancelled = false;
+
+    fetchBranchData(search, page)
+      .then((response) => {
+        if (cancelled) return;
+        setRows(response.data);
+        const meta = response.meta as { last_page?: number } | null | undefined;
+        setTotalPages(meta?.last_page ?? 1);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load branches");
+        setRows([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [search, page]);
 
   const columns = useMemo<DataTableColumn<BranchItem>[]>(
     () => [
@@ -55,7 +91,6 @@ export function BranchesPage() {
     <section>
       <div className="page-title">
         <h2>Branches</h2>
-        <p>Design-first branch list using mock data only.</p>
       </div>
 
       <SearchFiltersBar
@@ -72,6 +107,8 @@ export function BranchesPage() {
         }
       />
 
+      {error ? <p className="form-error">{error}</p> : null}
+
       <DataTable
         columns={columns}
         rows={rows}
@@ -80,6 +117,10 @@ export function BranchesPage() {
         emptyDescription="No branch matches current search."
         rowKey={(row) => String(row.id)}
       />
+
+      {!loading && totalPages > 1 ? (
+        <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+      ) : null}
 
       <Dialog
         open={dialog !== null}
