@@ -1,25 +1,61 @@
 import { useEffect, useMemo, useState } from "react";
 import { SearchFiltersBar } from "@/shared/components/filters/search-filters-bar";
 import { DataTable, type DataTableColumn } from "@/shared/components/data-table/data-table";
+import { Pagination } from "@/shared/components/data-table/pagination";
 import { Button } from "@/shared/ui/button";
+import { isModuleLive } from "@/config/feature-flags";
 import type { CashMovementItem } from "@/features/cash-movements/types/cash-movements.types";
 import { listCashMovementsMock } from "@/features/cash-movements/services/cash-movements.mock.service";
+import { listCashMovements } from "@/features/cash-movements/services/cash-movements.api.service";
+
+function fetchCashMovementData(searchTerm: string, currentPage: number) {
+  if (isModuleLive("cashMovements")) {
+    return listCashMovements({ search: searchTerm, page: currentPage, per_page: 15 });
+  }
+  return listCashMovementsMock(searchTerm);
+}
 
 export function CashMovementsPage() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<CashMovementItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const handleSearchChange = (value: string) => {
     setLoading(true);
     setSearch(value);
+    setPage(1);
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setLoading(true);
+    setPage(nextPage);
   };
 
   useEffect(() => {
-    listCashMovementsMock(search)
-      .then((response) => setRows(response.data))
-      .finally(() => setLoading(false));
-  }, [search]);
+    let cancelled = false;
+
+    fetchCashMovementData(search, page)
+      .then((response) => {
+        if (cancelled) return;
+        setRows(response.data);
+        const meta = response.meta as { last_page?: number } | null | undefined;
+        setTotalPages(meta?.last_page ?? 1);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load cash movements");
+        setRows([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [search, page]);
 
   const columns = useMemo<DataTableColumn<CashMovementItem>[]>(
     () => [
@@ -38,7 +74,6 @@ export function CashMovementsPage() {
     <section>
       <div className="page-title">
         <h2>Cash Movements</h2>
-        <p>Ledger screen migrated with mock data and filter placeholders.</p>
       </div>
 
       <SearchFiltersBar
@@ -54,6 +89,8 @@ export function CashMovementsPage() {
         }
       />
 
+      {error ? <p className="form-error">{error}</p> : null}
+
       <DataTable
         columns={columns}
         rows={rows}
@@ -62,6 +99,10 @@ export function CashMovementsPage() {
         emptyDescription="No movement matches current search."
         rowKey={(row) => String(row.id)}
       />
+
+      {!loading && totalPages > 1 ? (
+        <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+      ) : null}
     </section>
   );
 }
