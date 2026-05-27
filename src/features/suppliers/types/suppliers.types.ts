@@ -8,6 +8,12 @@ export type SupplierItem = {
   status: "active" | "inactive";
 };
 
+export type SupplierFilterParams = {
+  status?: string;
+  type?: string;
+  city_id?: number;
+};
+
 export type PurchaseOrderItem = {
   id: number;
   purchase_order_number: string;
