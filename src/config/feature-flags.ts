@@ -41,7 +41,7 @@ export const featureFlags = {
     expenses: true,
     cashMovements: true,
     suppliers: true,
-    purchaseOrders: false,
+    purchaseOrders: true,
     supplierPayments: false,
     reports: false,
     accounting: false,

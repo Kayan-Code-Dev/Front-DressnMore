@@ -25,6 +25,14 @@ export type PurchaseOrderItem = {
   order_date: string;
 };
 
+export type PurchaseOrderFilterParams = {
+  supplier_id?: number;
+  branch_id?: number;
+  status?: string;
+  date_from?: string;
+  date_to?: string;
+};
+
 export type SupplierPaymentItem = {
   id: number;
   supplier: string;
