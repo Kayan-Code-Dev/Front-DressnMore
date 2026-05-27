@@ -30,7 +30,7 @@ export const featureFlags = {
     dashboard: false,
     customers: true,
     dresses: true,
-    invoices: false,
+    invoices: true,
     categories: true,
     subcategories: true,
     branches: true,
