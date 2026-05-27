@@ -37,7 +37,7 @@ export const featureFlags = {
     deliveries: false,
     returns: false,
     payments: true,
-    cashboxes: false,
+    cashboxes: true,
     expenses: true,
     cashMovements: false,
     suppliers: false,
