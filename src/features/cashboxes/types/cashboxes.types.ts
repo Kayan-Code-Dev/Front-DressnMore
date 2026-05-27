@@ -7,3 +7,8 @@ export type CashboxItem = {
   is_active: boolean;
   description: string;
 };
+
+export type CashboxFilterParams = {
+  branch_id?: number;
+  status?: string;
+};
