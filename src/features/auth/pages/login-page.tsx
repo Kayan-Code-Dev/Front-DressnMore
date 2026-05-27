@@ -4,27 +4,46 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/shared/ui/button";
 import { FormField } from "@/shared/ui/form";
 import { Input } from "@/shared/ui/input";
+import { isModuleLive } from "@/config/feature-flags";
 import { mockTenantLogin } from "@/features/auth/services/auth.mock.service";
+import { tenantLogin } from "@/features/auth/services/auth.api.service";
 import { sessionStore } from "@/shared/lib/auth/session.store";
+import { isApiError, getFieldError, getValidationErrors } from "@/shared/types/api";
+import type { ValidationErrors } from "@/shared/types/api";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [workspace, setWorkspace] = useState("main-workspace");
-  const [email, setEmail] = useState("demo@dressnmore.local");
-  const [password, setPassword] = useState("password123");
+  const [workspace, setWorkspace] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ValidationErrors>({});
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+    setFieldErrors({});
     setLoading(true);
 
     try {
-      const response = await mockTenantLogin({ workspace, email, password });
+      const payload = { workspace, email, password };
+      const response = isModuleLive("auth")
+        ? await tenantLogin(payload)
+        : await mockTenantLogin(payload);
+
+      if (isApiError(response)) {
+        const errors = getValidationErrors(response);
+        if (Object.keys(errors).length > 0) {
+          setFieldErrors(errors);
+        }
+        setError(response.message);
+        return;
+      }
+
       sessionStore.setSession({
         token: response.data.token,
-        workspace: response.data.workspace,
+        workspace: response.data.tenant.slug,
         tenant: response.data.tenant,
         user: response.data.user,
         permissions: response.data.permissions,
@@ -42,9 +61,8 @@ export function LoginPage() {
     <div className="auth-page">
       <form className="auth-card" onSubmit={onSubmit}>
         <h1>DressnMore Login</h1>
-        <p>Foundation phase uses mock authentication only.</p>
 
-        <FormField htmlFor="workspace" label="Workspace">
+        <FormField htmlFor="workspace" label="Workspace" error={getFieldError(fieldErrors, "workspace")}>
           <Input
             id="workspace"
             value={workspace}
@@ -53,7 +71,7 @@ export function LoginPage() {
           />
         </FormField>
 
-        <FormField htmlFor="email" label="Email">
+        <FormField htmlFor="email" label="Email" error={getFieldError(fieldErrors, "email")}>
           <Input
             id="email"
             type="email"
@@ -63,7 +81,7 @@ export function LoginPage() {
           />
         </FormField>
 
-        <FormField htmlFor="password" label="Password">
+        <FormField htmlFor="password" label="Password" error={getFieldError(fieldErrors, "password")}>
           <Input
             id="password"
             type="password"

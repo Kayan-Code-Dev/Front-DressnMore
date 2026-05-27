@@ -79,6 +79,10 @@ const request = async <T>(path: string, options: RequestOptions = {}): Promise<A
     const json = (await response.json()) as Record<string, unknown>;
 
     if (!response.ok) {
+      if (response.status === 401 && !path.includes("/login")) {
+        sessionStore.clearSession();
+      }
+
       return {
         success: false,
         message: (json.message as string) || `Request failed (${response.status})`,
