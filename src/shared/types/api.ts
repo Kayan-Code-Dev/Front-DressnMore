@@ -20,9 +20,39 @@ export type PaginatedMeta = {
   per_page: number;
   total: number;
   last_page: number;
-  total_pages?: number;
 };
 
 export type PaginatedResponse<T> = ApiSuccess<T[]> & {
   meta: PaginatedMeta & Record<string, unknown>;
 };
+
+export type PaginationParams = {
+  page?: number;
+  per_page?: number;
+};
+
+export type ListQueryParams<F = Record<string, unknown>> = PaginationParams & {
+  search?: string;
+} & F;
+
+export type DownloadResult = {
+  blob: Blob;
+  filename: string;
+};
+
+export function isApiError(response: ApiResponse<unknown>): response is ApiError {
+  return !response.success;
+}
+
+export function getValidationErrors(response: ApiResponse<unknown>): ValidationErrors {
+  if (!response.success && response.errors) {
+    return response.errors;
+  }
+  return {};
+}
+
+export function getFieldError(errors: ValidationErrors, field: string): string | null {
+  const value = errors[field];
+  if (!value) return null;
+  return Array.isArray(value) ? value[0] ?? null : value;
+}

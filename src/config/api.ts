@@ -1,9 +1,16 @@
 import { env } from "@/shared/lib/env/env";
 
+const TENANT_PREFIX = "/api/tenant";
+
 export const API_CONFIG = Object.freeze({
   baseUrl: env.apiBaseUrl,
+  tenantPrefix: TENANT_PREFIX,
   timeoutMs: 15_000,
   endpoints: {
-    tenantLogin: "/api/tenant/login",
+    tenantLogin: `${TENANT_PREFIX}/login`,
   },
 });
+
+export function tenantPath(resource: string): string {
+  return `${TENANT_PREFIX}${resource.startsWith("/") ? resource : `/${resource}`}`;
+}
