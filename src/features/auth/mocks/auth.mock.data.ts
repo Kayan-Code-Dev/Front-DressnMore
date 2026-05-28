@@ -14,6 +14,7 @@ export const mockLoginData: MockLoginResult = {
     email: "demo@dressnmore.local",
   },
   permissions: [
+    "dashboard.view",
     "customers.view",
     "dresses.view",
     "invoices.view",
