@@ -33,6 +33,7 @@ export type SidebarLabel = {
   permission?: string;
   permissions?: string[];
   iconComponent?: React.ReactNode | null;
+  section?: string;
 };
 
 export const sidebarLabels: SidebarLabel[] = [
@@ -41,6 +42,7 @@ export const sidebarLabels: SidebarLabel[] = [
     label: "لوحة التحكم",
     path: "/dashboard",
     level: 1,
+    section: "الرئيسية",
     permissions: ["dashboard.view"],
     iconComponent: createIcon(LayoutDashboard),
   },
@@ -49,6 +51,7 @@ export const sidebarLabels: SidebarLabel[] = [
     label: "العملاء",
     path: "/customers",
     level: 1,
+    section: "العملاء",
     permissions: ["customers.view"],
     iconComponent: createIcon(Users),
   },
@@ -57,6 +60,7 @@ export const sidebarLabels: SidebarLabel[] = [
     label: "إدارة المنتجات",
     path: "/dresses",
     level: 1,
+    section: "العمليات",
     permissions: ["dresses.view", "dress_categories.view"],
     iconComponent: createIcon(Package),
     subItems: [
@@ -133,6 +137,7 @@ export const sidebarLabels: SidebarLabel[] = [
     label: "إدارة الحسابات",
     path: "/payments",
     level: 1,
+    section: "المالية",
     permissions: ["payments.view", "cashboxes.view", "expenses.view", "cash_movements.view"],
     iconComponent: createIcon(Wallet),
     subItems: [
@@ -175,6 +180,7 @@ export const sidebarLabels: SidebarLabel[] = [
     label: "الموردين",
     path: "/suppliers",
     level: 1,
+    section: "الإدارة",
     permissions: ["suppliers.view", "purchase_orders.view", "supplier_payments.view"],
     iconComponent: createIcon(ShoppingCart),
     subItems: [
@@ -217,6 +223,7 @@ export const sidebarLabels: SidebarLabel[] = [
     label: "التقارير",
     path: "/reports",
     level: 1,
+    section: "التقارير",
     permissions: ["reports.view"],
     iconComponent: createIcon(FileBarChart),
   },
@@ -225,6 +232,7 @@ export const sidebarLabels: SidebarLabel[] = [
     label: "الإعدادات",
     path: "/settings/account",
     level: 1,
+    section: "النظام",
     permissions: ["settings.profile"],
     iconComponent: createIcon(Settings),
   },

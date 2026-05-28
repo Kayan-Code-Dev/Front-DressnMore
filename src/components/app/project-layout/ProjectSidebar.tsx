@@ -69,6 +69,7 @@ export default function ProjectSidebar({
     return flat.some((sub) => navEntryIsActive(sub, location));
   };
 
+  const renderedSections = new Set<string>();
   const sidebarBg = "linear-gradient(160deg, #0369A1 0%, #0284C7 35%, #0EA5E9 100%)";
   const activeItemStyle = {
     color: "#ffffff",
@@ -161,9 +162,18 @@ export default function ProjectSidebar({
             const hasSubItems = flatSubs.length > 0;
             const groupActive = isGroupActive(item);
             const isOpen = openGroups.includes(item.label) || groupActive;
+            const showSection = item.section && !renderedSections.has(item.section);
+            if (item.section) renderedSections.add(item.section);
 
             return (
               <li key={item.label || item.path}>
+                {showSection && !collapsed && (
+                  <div className="sidebar-section-label">{item.section}</div>
+                )}
+                {showSection && collapsed && (
+                  <div className="my-2 mx-auto w-7 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
+                )}
+
                 {hasSubItems ? (
                   <>
                     <div className="relative sidebar-nav-item">
@@ -197,6 +207,7 @@ export default function ProjectSidebar({
                           </>
                         )}
                       </button>
+                        {collapsed && <span className="sidebar-tooltip">{item.label}</span>}
                     </div>
 
                     {!collapsed && isOpen && (
@@ -260,6 +271,7 @@ export default function ProjectSidebar({
                         )}
                       </NavLink>
                     ) : null}
+                    {collapsed && <span className="sidebar-tooltip">{item.label}</span>}
                   </div>
                 )}
               </li>
