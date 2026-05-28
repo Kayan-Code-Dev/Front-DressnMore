@@ -1,0 +1,40 @@
+import type { PaymentItem } from "@/features/payments/types/payments.types";
+
+export const paymentsFixture: PaymentItem[] = [
+  {
+    id: 1,
+    customer: "Amina K",
+    branch: "Cairo Main",
+    amount: 2500,
+    status: "pending",
+    payment_type: "initial",
+    payment_date: "2026-06-04",
+    created_at: "2026-06-03T10:20:00Z",
+    notes: "Initial payment",
+    order_number: "INV-1001",
+  },
+  {
+    id: 2,
+    customer: "Laila M",
+    branch: "Alex Branch",
+    amount: 4300,
+    status: "paid",
+    payment_type: "normal",
+    payment_date: "2026-06-05",
+    created_at: "2026-06-05T09:10:00Z",
+    notes: "Paid in full",
+    order_number: "INV-1002",
+  },
+  {
+    id: 3,
+    customer: "Nour H",
+    branch: "Cairo Main",
+    amount: 900,
+    status: "cancelled",
+    payment_type: "fee",
+    payment_date: "2026-06-06",
+    created_at: "2026-06-06T11:42:00Z",
+    notes: "Cancelled fee",
+    order_number: "INV-1003",
+  },
+];
