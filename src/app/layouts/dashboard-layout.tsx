@@ -1,40 +1,70 @@
-import { Outlet } from "react-router-dom";
-import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app/new-sidebar/AppSideBar";
-import Header from "@/components/app/header";
-
-const SIDEBAR_WIDTH_OPEN = "17rem";
-const SIDEBAR_WIDTH_ICON = "3.5rem";
-const SIDEBAR_GAP_COLLAPSED = "1.5rem";
-
-function MainContent() {
-  const { open, isMobile } = useSidebar();
-  return (
-    <div
-      className="flex-1 min-w-0 flex flex-col min-h-screen transition-[margin] duration-200 ease-linear overflow-x-hidden"
-      style={{
-        marginRight: isMobile
-          ? 0
-          : open
-            ? SIDEBAR_WIDTH_OPEN
-            : `calc(${SIDEBAR_WIDTH_ICON} + ${SIDEBAR_GAP_COLLAPSED})`,
-      }}
-    >
-      <Header />
-      <div className="p-4 sm:p-5 md:p-6 flex-1 min-w-0 w-full max-w-full overflow-x-hidden">
-        <Outlet />
-      </div>
-    </div>
-  );
-}
+import { useState, useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
+import ProjectSidebar from "@/components/app/project-layout/ProjectSidebar";
+import ProjectTopBar from "@/components/app/project-layout/ProjectTopBar";
 
 export function DashboardLayout() {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const check = () => {
+      const w = window.innerWidth;
+      const mobile = w < 1024;
+      const tablet = w >= 768 && w < 1280;
+      setIsMobile(mobile);
+      if (!mobile) setMobileOpen(false);
+      if (tablet && !mobile) setCollapsed(true);
+      if (w >= 1280) setCollapsed(false);
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const effectiveCollapsed = isMobile ? false : collapsed;
+  const sidebarWidth = isMobile ? 0 : effectiveCollapsed ? 70 : 260;
+
   return (
-    <SidebarProvider defaultOpen={false}>
-      <div className="min-h-screen bg-[linear-gradient(180deg,hsl(220_20%_98%)_0%,hsl(220_14%_96%)_100%)] w-full min-w-0 flex flex-row overflow-x-hidden">
-        <AppSidebar />
-        <MainContent />
-      </div>
-    </SidebarProvider>
+    <div
+      className="min-h-screen"
+      style={{ background: "var(--color-bg)", direction: "rtl" }}
+    >
+      <ProjectSidebar
+        collapsed={effectiveCollapsed}
+        onToggle={() => setCollapsed((c) => !c)}
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
+      />
+
+      <ProjectTopBar
+        sidebarWidth={sidebarWidth}
+        onMobileMenuToggle={() => setMobileOpen((o) => !o)}
+      />
+
+      <main
+        className="app-print-main transition-all duration-300 ease-out"
+        style={{
+          marginRight: `${sidebarWidth}px`,
+          paddingTop: "var(--topbar-height)",
+          minHeight: "100vh",
+        }}
+      >
+        <div
+          className="app-print-main-inner min-h-full"
+          style={{ padding: "var(--page-padding)" }}
+        >
+          <style>{`
+            @media (max-width: 1023px) { .app-print-main > .app-print-main-inner { padding: var(--page-padding-md) !important; } }
+            @media (max-width: 640px)  { .app-print-main > .app-print-main-inner { padding: var(--page-padding-sm) !important; } }
+          `}</style>
+          <div key={location.pathname} className="page-enter">
+            <Outlet />
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

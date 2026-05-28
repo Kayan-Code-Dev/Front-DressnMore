@@ -1,3 +1,8 @@
+export function fmtAr(n: number | null | undefined): string {
+  if (n == null) return "0";
+  return new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 0 }).format(n);
+}
+
 export function fmtNum(value: number | undefined | null): string {
   if (value === undefined || value === null || Number.isNaN(value)) return "—";
   return Number(value).toLocaleString("en-US");

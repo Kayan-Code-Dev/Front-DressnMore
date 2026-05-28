@@ -38,62 +38,48 @@ export function DashboardPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex-1 min-h-0 bg-muted/20" dir="rtl">
-        <DashboardSkeleton />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (error) {
-    return (
-      <div className="flex-1 min-h-0 bg-muted/20" dir="rtl">
-        <DashboardError message={error} />
-      </div>
-    );
+    return <DashboardError message={error} />;
   }
 
   return (
-    <div className="flex-1 min-h-0 bg-muted/20" dir="rtl">
+    <div className="space-y-4 fade-in">
       <DashboardHeader
         periodLabel="هذا الشهر"
         showFilters={showFilters}
         onToggleFilters={() => setShowFilters((p) => !p)}
       />
 
-      <div className="space-y-8 pb-8">
-        <DashboardKpis
-          data={{
-            orderCount: state?.kpiData?.orderCount ?? 1248,
-            totalRevenue: state?.kpiData?.totalRevenue ?? 128400,
-            averageOrderValue: state?.kpiData?.averageOrderValue ?? 102.9,
-            activeClients: state?.kpiData?.activeClients ?? 436,
-            totalClients: state?.kpiData?.totalClients ?? 580,
-            newClients: state?.kpiData?.newClients ?? 42,
-            clientGrowthRate: state?.kpiData?.clientGrowthRate ?? 3.7,
-            availableItems: state?.kpiData?.availableItems ?? 312,
-            totalItems: state?.kpiData?.totalItems ?? 485,
-            outOfBranch: state?.kpiData?.outOfBranch ?? 173,
-            utilizationRate: state?.kpiData?.utilizationRate ?? 35.7,
-            totalPayments: state?.kpiData?.totalPayments ?? 96500,
-            paymentCount: state?.kpiData?.paymentCount ?? 64,
-            totalActivities: state?.kpiData?.totalActivities ?? 2847,
-          }}
-        />
+      <DashboardKpis
+        data={{
+          totalRevenue: state?.kpiData?.totalRevenue ?? 128400,
+          orderCount: state?.kpiData?.orderCount ?? 1248,
+          totalPayments: state?.kpiData?.totalPayments ?? 96500,
+          activeClients: state?.kpiData?.activeClients ?? 436,
+          totalClients: state?.kpiData?.totalClients ?? 580,
+          clientGrowthRate: state?.kpiData?.clientGrowthRate ?? 3.7,
+          availableItems: state?.kpiData?.availableItems ?? 312,
+          utilizationRate: state?.kpiData?.utilizationRate ?? 35.7,
+          profit: state?.financialData?.profit ?? 86100,
+          profitMargin: state?.financialData?.profitMargin ?? 67.1,
+        }}
+      />
 
-        <DashboardSalesAndFinancial
-          financial={{
-            totalIncome: state?.financialData?.totalIncome ?? 128400,
-            totalExpenses: state?.financialData?.totalExpenses ?? 42300,
-            profit: state?.financialData?.profit ?? 86100,
-            profitMargin: state?.financialData?.profitMargin ?? 67.1,
-          }}
-        />
+      <DashboardSalesAndFinancial
+        financial={{
+          totalIncome: state?.financialData?.totalIncome ?? 128400,
+          totalExpenses: state?.financialData?.totalExpenses ?? 42300,
+          profit: state?.financialData?.profit ?? 86100,
+          profitMargin: state?.financialData?.profitMargin ?? 67.1,
+        }}
+      />
 
-        <DashboardDistributions />
+      <DashboardDistributions />
 
-        <DashboardFooter />
-      </div>
+      <DashboardFooter />
     </div>
   );
 }

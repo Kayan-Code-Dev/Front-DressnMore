@@ -1,5 +1,4 @@
-import { Clock, Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Filter } from "lucide-react";
 
 type DashboardHeaderProps = {
   periodLabel: string;
@@ -7,36 +6,54 @@ type DashboardHeaderProps = {
   onToggleFilters: () => void;
 };
 
+const today = new Date().toLocaleDateString("ar-EG", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
 export function DashboardHeader({
   periodLabel,
-  showFilters,
   onToggleFilters,
 }: DashboardHeaderProps) {
   return (
-    <header className="mb-6 rounded-2xl border border-primary-foreground/10 bg-linear-to-l from-primary via-primary to-primary/95 px-6 py-6 text-primary-foreground shadow-xl">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight">لوحة التحكم</h1>
-            <span className="rounded-full bg-primary-foreground/15 px-2.5 py-0.5 text-xs font-medium">
-              {periodLabel}
-            </span>
-          </div>
-          <p className="flex items-center gap-1.5 text-sm text-primary-foreground/85">
-            <Clock className="h-3.5 w-3.5 opacity-80" />
-            نظرة عامة على أداء النظام
-          </p>
-        </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={onToggleFilters}
-          className="shrink-0 rounded-xl border-0 bg-white/15 font-medium text-white hover:bg-white/25"
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+      <div>
+        <h1
+          className="text-[20px] font-black leading-tight"
+          style={{ color: "var(--color-text-primary)" }}
         >
-          <Filter className="ml-2 h-4 w-4" />
-          {showFilters ? "إخفاء الفلاتر" : "عرض الفلاتر"}
-        </Button>
+          مرحباً،&nbsp;
+          <span style={{ color: "var(--color-accent)" }}>المدير العام</span>
+        </h1>
+        <p
+          className="text-[12.5px] mt-0.5 font-medium"
+          style={{ color: "var(--color-text-muted)" }}
+        >
+          {today} · {periodLabel}
+        </p>
       </div>
-    </header>
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          onClick={onToggleFilters}
+          className="flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-bold rounded-xl border cursor-pointer transition-colors whitespace-nowrap"
+          style={{
+            background: "white",
+            borderColor: "var(--color-border)",
+            color: "var(--color-text-secondary)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#F4F7FB";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "white";
+          }}
+        >
+          <Filter className="w-3.5 h-3.5" />
+          الفلاتر
+        </button>
+      </div>
+    </div>
   );
 }
