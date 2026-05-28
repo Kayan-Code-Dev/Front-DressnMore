@@ -25,7 +25,7 @@ export const featureFlags = {
   useMockServices: true,
 
   modules: {
-    auth: true,
+    auth: false,
     lookups: true,
     dashboard: false,
     customers: true,
