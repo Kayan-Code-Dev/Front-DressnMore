@@ -25,11 +25,10 @@ export function useSessionRestore(): { restoring: boolean } {
         const session = sessionStore.getState();
         sessionStore.setSession({
           token: session.token,
-          workspace: response.data.tenant.slug,
           tenant: response.data.tenant,
           user: response.data.user,
           permissions: response.data.permissions,
-          plan: response.data.plan,
+          subscription: response.data.subscription,
         });
       }
 

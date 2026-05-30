@@ -19,7 +19,8 @@ export type ModuleName =
   | "supplierPayments"
   | "reports"
   | "accounting"
-  | "settings";
+  | "settings"
+  | "subscription";
 
 export const featureFlags = {
   useMockServices: true,
@@ -46,6 +47,7 @@ export const featureFlags = {
     reports: false,
     accounting: false,
     settings: false,
+    subscription: false,
   } satisfies Record<ModuleName, boolean>,
 };
 

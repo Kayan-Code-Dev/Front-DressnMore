@@ -12,7 +12,7 @@ import { MobileSidebar } from "./sidebar/mobile-sidebar";
 export default function Header() {
   const navigate = useNavigate();
   const user = useSession((s) => s.user as { name?: string } | null);
-  const workspace = useSession((s) => s.workspace);
+  const tenant = useSession((s) => s.tenant as { name?: string } | null);
   const [loggingOut, setLoggingOut] = useState(false);
 
   const displayName = user?.name ?? "المستخدم";
@@ -51,8 +51,8 @@ export default function Header() {
         </button>
         <div className="flex flex-col min-w-0">
           <span className="text-sm font-semibold text-slate-900 truncate">{displayName}</span>
-          {workspace && (
-            <span className="text-[11px] text-slate-400 truncate">{workspace}</span>
+          {tenant?.name && (
+            <span className="text-[11px] text-slate-400 truncate">{tenant.name}</span>
           )}
         </div>
       </div>

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
 import { isModuleLive } from "@/config/feature-flags";
 import { mockTenantLogin } from "@/features/auth/services/auth.mock.service";
@@ -18,8 +18,6 @@ import {
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [workspace, setWorkspace] = useState(() => searchParams.get("workspace")?.trim() ?? "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,13 +27,6 @@ export function LoginPage() {
   const [loginError, setLoginError] = useState(false);
   const [loginErrorMessage, setLoginErrorMessage] = useState("");
 
-  useEffect(() => {
-    const fromQuery = searchParams.get("workspace")?.trim();
-    if (fromQuery) {
-      setWorkspace(fromQuery);
-    }
-  }, [searchParams]);
-
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
@@ -43,7 +34,7 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      const payload = { workspace, email, password };
+      const payload = { email, password };
       const response = isModuleLive("auth")
         ? await tenantLogin(payload)
         : await mockTenantLogin(payload);
@@ -60,13 +51,17 @@ export function LoginPage() {
 
       sessionStore.setSession({
         token: response.data.token,
-        workspace: response.data.tenant.slug,
         tenant: response.data.tenant,
         user: response.data.user,
         permissions: response.data.permissions,
-        plan: response.data.plan,
+        subscription: response.data.subscription,
       });
-      navigate("/dashboard", { replace: true });
+
+      const destination = response.data.subscription.lifecycle_status === "expired"
+        ? "/settings/subscription"
+        : "/dashboard";
+
+      navigate(destination, { replace: true });
     } catch (submitError) {
       const msg = submitError instanceof Error ? submitError.message : "Login failed";
       setLoginErrorMessage(msg);
@@ -88,7 +83,6 @@ export function LoginPage() {
         .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.2); }
       `}</style>
 
-      {/* Background effects */}
       <div
         className="absolute inset-0 opacity-10"
         style={{
@@ -115,7 +109,6 @@ export function LoginPage() {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="glass-card rounded-3xl shadow-2xl overflow-hidden">
-          {/* Header */}
           <div className="bg-gradient-to-l from-blue-900 to-blue-600 px-8 py-8 text-center">
             <div className="inline-flex items-center gap-3 mb-6">
               <div className="w-12 h-12 flex items-center justify-center rounded-xl overflow-hidden bg-white shadow-md">
@@ -127,52 +120,26 @@ export function LoginPage() {
             <p className="text-white/80 text-sm">أدخل بياناتك للوصول إلى لوحة التحكم</p>
           </div>
 
-          {/* Form */}
           <div className="p-8">
             <form onSubmit={onSubmit} className="space-y-5" dir="rtl">
-              {/* Workspace */}
-              <div className="space-y-2">
-                <label htmlFor="workspace" className="text-right text-sm font-medium text-gray-700 block">
-                  مساحة العمل
-                </label>
-                <div className="relative">
-                  <Input
-                    id="workspace"
-                    placeholder="workspace-slug"
-                    className="pr-4 pl-11 text-right h-12 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
-                    value={workspace}
-                    onChange={(e) => setWorkspace(e.target.value)}
-                    required
-                    dir="ltr"
-                  />
-                </div>
-                {getFieldError(fieldErrors, "workspace") && (
-                  <p className="text-right text-xs text-red-500">{getFieldError(fieldErrors, "workspace")}</p>
-                )}
-              </div>
-
-              {/* Email */}
               <div className="space-y-2">
                 <label htmlFor="email" className="text-right text-sm font-medium text-gray-700 block">
                   البريد الإلكتروني
                 </label>
-                <div className="relative">
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="example@dressnmore.com"
-                    className="pr-4 pl-11 text-right h-12 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="example@dressnmore.com"
+                  className="h-12 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
                 {getFieldError(fieldErrors, "email") && (
                   <p className="text-right text-xs text-red-500">{getFieldError(fieldErrors, "email")}</p>
                 )}
               </div>
 
-              {/* Password */}
               <div className="space-y-2">
                 <label htmlFor="password" className="text-right text-sm font-medium text-gray-700 block">
                   كلمة المرور
@@ -233,7 +200,6 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* Login Error Dialog */}
       <Dialog open={loginError} onOpenChange={setLoginError}>
         <DialogContent className="max-w-md rounded-2xl p-6 text-center border-0 shadow-2xl" dir="rtl">
           <div className="w-16 h-16 flex items-center justify-center bg-red-50 rounded-full mx-auto mb-4">
@@ -257,7 +223,6 @@ export function LoginPage() {
             </Button>
             <Button
               onClick={() => {
-                setWorkspace("");
                 setEmail("");
                 setPassword("");
                 setError(null);

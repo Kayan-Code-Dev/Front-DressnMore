@@ -7,7 +7,7 @@ import { tenantLogout } from "@/features/auth/services/auth.api.service";
 
 export function AppHeader() {
   const navigate = useNavigate();
-  const workspace = useSession((state) => state.workspace);
+  const tenant = useSession((state) => state.tenant as { name?: string } | null);
   const user = useSession((state) => state.user as { name?: string } | null);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -27,7 +27,7 @@ export function AppHeader() {
     <header className="app-header">
       <div>
         <h1>Front Foundation</h1>
-        <p>{workspace ? `Workspace: ${workspace}` : "No workspace selected"}</p>
+        <p>{tenant?.name ? `Tenant: ${tenant.name}` : "No tenant selected"}</p>
       </div>
 
       <div className="header-actions">

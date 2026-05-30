@@ -24,6 +24,7 @@ import { SalesReportsPage } from "@/features/reports/pages/sales-reports-page";
 import { TailoringReportsPage } from "@/features/reports/pages/tailoring-reports-page";
 import { AccountingSummaryPage } from "@/features/accounting/pages/accounting-summary-page";
 import { AccountSettingsPage } from "@/features/settings/pages/account-settings-page";
+import { SubscriptionPage } from "@/features/subscriptions/pages/subscription-page";
 
 export function AppRoutes() {
   return (
@@ -66,6 +67,7 @@ export function AppRoutes() {
 
         <Route path="/accounting" element={<AccountingSummaryPage />} />
         <Route path="/settings/account" element={<AccountSettingsPage />} />
+        <Route path="/settings/subscription" element={<SubscriptionPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

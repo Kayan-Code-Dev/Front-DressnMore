@@ -48,8 +48,9 @@ const getTenantHeaders = () => {
     headers.Authorization = `Bearer ${session.token}`;
   }
 
-  if (session.workspace) {
-    headers["X-Tenant"] = session.workspace;
+  const tenantSlug = sessionStore.getTenantSlug();
+  if (tenantSlug) {
+    headers["X-Tenant"] = tenantSlug;
   }
 
   return headers;

@@ -1,12 +1,12 @@
+import type { TenantSubscription } from "@/features/subscriptions/types/subscription.types";
+
 export type LoginFormValues = {
-  workspace: string;
   email: string;
   password: string;
 };
 
 export type LoginResult = {
   token: string;
-  workspace: string;
   tenant: {
     id: string;
     slug: string;
@@ -18,10 +18,7 @@ export type LoginResult = {
     email: string;
   };
   permissions: string[];
-  plan: {
-    code: string;
-    name: string;
-  };
+  subscription: TenantSubscription;
 };
 
 export type MockLoginResult = LoginResult;
@@ -38,8 +35,5 @@ export type MeResult = {
     email: string;
   };
   permissions: string[];
-  plan: {
-    code: string;
-    name: string;
-  };
+  subscription: TenantSubscription;
 };

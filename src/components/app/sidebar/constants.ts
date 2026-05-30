@@ -21,6 +21,7 @@ import {
   Calculator,
   BarChart3,
   Scissors,
+  Crown,
 } from "lucide-react";
 
 const iconSize = 20;
@@ -271,5 +272,23 @@ export const sidebarLabels: SidebarLabel[] = [
     section: "النظام",
     permissions: ["settings.profile"],
     iconComponent: createIcon(Settings),
+    subItems: [
+      {
+        icon: null,
+        label: "الملف الشخصي",
+        path: "/settings/account",
+        level: 2,
+        permissions: ["settings.profile"],
+        iconComponent: createIcon(Settings),
+      },
+      {
+        icon: null,
+        label: "الاشتراك",
+        path: "/settings/subscription",
+        level: 2,
+        permissions: ["subscription.view"],
+        iconComponent: createIcon(Crown),
+      },
+    ],
   },
 ];

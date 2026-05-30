@@ -12,11 +12,6 @@ export async function mockTenantLogin(payload: LoginFormValues): Promise<ApiSucc
     message: "Success",
     data: {
       ...mockLoginData,
-      workspace: payload.workspace.trim(),
-      tenant: {
-        ...mockLoginData.tenant,
-        slug: payload.workspace.trim(),
-      },
       user: {
         ...mockLoginData.user,
         email: payload.email,
