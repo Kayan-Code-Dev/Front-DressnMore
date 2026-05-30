@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 
 import type { PurchaseOrderItem } from "@/features/suppliers/types/suppliers.types";
 import { listPurchaseOrdersMock } from "@/features/suppliers/services/suppliers.mock.service";
@@ -34,6 +35,7 @@ function TableSkeletonRows({ rows = 5, cols = 8 }: { rows?: number; cols?: numbe
 
 export function PurchaseOrdersPage() {
   const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<PurchaseOrderItem[]>([]);
@@ -85,7 +87,7 @@ export function PurchaseOrdersPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" disabled><Filter className="h-4 w-4 ml-1.5" />الفلاتر</Button>
+            <Button variant="outline" onClick={() => setFiltersOpen((v) => !v)}><Filter className="h-4 w-4 ml-1.5" />الفلاتر</Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -95,6 +97,8 @@ export function PurchaseOrdersPage() {
               <Input value={search} onChange={(e) => handleSearchChange(e.target.value)} placeholder="بحث عن أمر شراء..." className="pr-9" />
             </div>
           </div>
+          <ListPageStandardFilters open={filtersOpen} />
+
           {error && <div className="flex items-center justify-center py-6"><p className="text-destructive text-sm">حدث خطأ أثناء تحميل البيانات: {error}</p></div>}
           {!error && (
             <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--color-border)" }}>

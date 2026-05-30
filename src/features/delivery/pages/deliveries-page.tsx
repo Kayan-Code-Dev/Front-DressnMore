@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import type { DeliveryItem } from "@/features/delivery/types/deliveries.types";
 import { listDeliveriesMock } from "@/features/delivery/services/deliveries.mock.service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -6,7 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PackageCheck, Search } from "lucide-react";
+import { PackageCheck, Search, Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const statusMap: Record<string, { label: string; variant: "success" | "warning" }> = {
   ready: { label: "جاهز", variant: "warning" },
@@ -19,6 +21,7 @@ function TableSkeletonRows({ rows = 5, cols = 8 }: { rows?: number; cols?: numbe
 
 export function DeliveriesPage() {
   const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<DeliveryItem[]>([]);
 
@@ -62,6 +65,13 @@ export function DeliveriesPage() {
               <Input value={search} onChange={(e) => handleSearchChange(e.target.value)} placeholder="بحث في التسليمات..." className="pr-9" />
             </div>
           </div>
+          <div className="flex items-center gap-2 mb-4">
+            <Button variant="outline" onClick={() => setFiltersOpen((v) => !v)}>
+              <Filter className="h-4 w-4 ml-1.5" />
+              الفلاتر
+            </Button>
+          </div>
+          <ListPageStandardFilters open={filtersOpen} />
           <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
             <Table>
               <TableHeader><TableRow className="bg-muted/30">{columns.map((col) => (<TableHead key={col.key} className="text-center font-bold text-xs">{col.title}</TableHead>))}</TableRow></TableHeader>

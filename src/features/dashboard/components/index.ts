@@ -11,3 +11,5 @@ export { DashboardGridCard } from "./DashboardGridCard";
 export { DashboardKpis } from "./DashboardKpis";
 export { DashboardSalesAndFinancial } from "./DashboardSalesAndFinancial";
 export { DashboardDistributions } from "./DashboardDistributions";
+export { DashboardFilters } from "./DashboardFilters";
+export { DashboardSalesChart } from "./DashboardSalesChart";

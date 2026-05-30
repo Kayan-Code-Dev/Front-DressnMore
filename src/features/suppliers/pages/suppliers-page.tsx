@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import { isModuleLive } from "@/config/feature-flags";
 import type { SupplierItem } from "@/features/suppliers/types/suppliers.types";
 import { listSuppliersMock } from "@/features/suppliers/services/suppliers.mock.service";
@@ -28,6 +29,7 @@ function TableSkeletonRows({ rows = 5, cols = 7 }: { rows?: number; cols?: numbe
 
 export function SuppliersPage() {
   const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<SupplierItem[]>([]);
@@ -81,7 +83,7 @@ export function SuppliersPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" disabled><Filter className="h-4 w-4 ml-1.5" />الفلاتر</Button>
+            <Button variant="outline" onClick={() => setFiltersOpen((v) => !v)}><Filter className="h-4 w-4 ml-1.5" />الفلاتر</Button>
             <Button onClick={() => { setSelected(null); setDialog("create"); }}><Plus className="h-4 w-4 ml-1.5" />إنشاء مورد</Button>
           </div>
         </CardHeader>
@@ -92,6 +94,8 @@ export function SuppliersPage() {
               <Input value={search} onChange={(e) => handleSearchChange(e.target.value)} placeholder="بحث عن مورد..." className="pr-9" />
             </div>
           </div>
+          <ListPageStandardFilters open={filtersOpen} />
+
           {error && <div className="flex items-center justify-center py-6"><p className="text-destructive text-sm">حدث خطأ أثناء تحميل البيانات: {error}</p></div>}
           {!error && (
             <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--color-border)" }}>

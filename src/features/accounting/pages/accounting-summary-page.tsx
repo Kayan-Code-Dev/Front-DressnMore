@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import type { AccountingSummary, LedgerEntry } from "@/features/accounting/types/accounting.types";
 import { getAccountingSummaryMock, listLedgerMock } from "@/features/accounting/services/accounting.mock.service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -16,6 +17,7 @@ function TableSkeletonRows({ rows = 5, cols = 7 }: { rows?: number; cols?: numbe
 export function AccountingSummaryPage() {
   const [summary, setSummary] = useState<AccountingSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<LedgerEntry[]>([]);
 
@@ -100,7 +102,7 @@ export function AccountingSummaryPage() {
         <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
           <CardTitle className="text-base font-bold" style={{ color: "var(--color-text-primary)" }}>سجل القيود</CardTitle>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" disabled><Filter className="h-4 w-4 ml-1.5" />الفلاتر</Button>
+            <Button variant="outline" onClick={() => setFiltersOpen((v) => !v)}><Filter className="h-4 w-4 ml-1.5" />الفلاتر</Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -110,6 +112,7 @@ export function AccountingSummaryPage() {
               <Input value={search} onChange={(e) => handleSearchChange(e.target.value)} placeholder="بحث في القيود..." className="pr-9" />
             </div>
           </div>
+          <ListPageStandardFilters open={filtersOpen} />
           <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
             <Table>
               <TableHeader><TableRow className="bg-muted/30">{columns.map((col) => (<TableHead key={col.key} className="text-center font-bold text-xs">{col.title}</TableHead>))}</TableRow></TableHeader>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import { isModuleLive } from "@/config/feature-flags";
 import { listCustomersMock } from "@/features/customers/services/customers.mock.service";
 import { listCustomers } from "@/features/customers/services/customers.api.service";
@@ -68,6 +69,7 @@ function TableSkeletonRows({ rows = 5, cols = 5 }: { rows?: number; cols?: numbe
 
 export function CustomersPage() {
   const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<CustomerItem[]>([]);
@@ -141,7 +143,7 @@ export function CustomersPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" disabled>
+            <Button variant="outline" onClick={() => setFiltersOpen((v) => !v)}>
               <Filter className="h-4 w-4 ml-1.5" />
               الفلاتر
             </Button>
@@ -164,6 +166,8 @@ export function CustomersPage() {
               />
             </div>
           </div>
+
+          <ListPageStandardFilters open={filtersOpen} />
 
           {error && (
             <div className="flex items-center justify-center py-6">

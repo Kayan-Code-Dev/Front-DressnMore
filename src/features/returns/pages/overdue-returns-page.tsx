@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import type { OverdueReturnItem } from "@/features/returns/types/returns.types";
 import { listOverdueReturnsMock } from "@/features/returns/services/returns.mock.service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -21,6 +22,7 @@ function TableSkeletonRows({ rows = 5, cols = 9 }: { rows?: number; cols?: numbe
 
 export function OverdueReturnsPage() {
   const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<OverdueReturnItem[]>([]);
 
@@ -58,7 +60,7 @@ export function OverdueReturnsPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" disabled><Filter className="h-4 w-4 ml-1.5" />الفلاتر</Button>
+            <Button variant="outline" onClick={() => setFiltersOpen((v) => !v)}><Filter className="h-4 w-4 ml-1.5" />الفلاتر</Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -68,6 +70,7 @@ export function OverdueReturnsPage() {
               <Input value={search} onChange={(e) => handleSearchChange(e.target.value)} placeholder="بحث في المرتجعات المتأخرة..." className="pr-9" />
             </div>
           </div>
+          <ListPageStandardFilters open={filtersOpen} />
           <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
             <Table>
               <TableHeader><TableRow className="bg-muted/30">{columns.map((col) => (<TableHead key={col.key} className="text-center font-bold text-xs">{col.title}</TableHead>))}</TableRow></TableHeader>

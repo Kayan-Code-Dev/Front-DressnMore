@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import { isModuleLive } from "@/config/feature-flags";
 import type { CategoryItem } from "@/features/catalog/categories/types/categories.types";
 import { listCategoriesMock } from "@/features/catalog/categories/services/categories.mock.service";
@@ -35,6 +36,7 @@ import {
   Tags,
   Search,
   Plus,
+  Filter,
   Pencil,
   Trash2,
   ChevronLeft,
@@ -76,6 +78,7 @@ function TableSkeletonRows({ rows = 5, cols = 4 }: { rows?: number; cols?: numbe
 
 export function CategoriesPage() {
   const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<CategoryItem[]>([]);
@@ -149,6 +152,10 @@ export function CategoriesPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => setFiltersOpen((v) => !v)}>
+              <Filter className="h-4 w-4 ml-1.5" />
+              الفلاتر
+            </Button>
             <Button onClick={() => setDialog("create")}>
               <Plus className="h-4 w-4 ml-1.5" />
               إنشاء فئة جديدة
@@ -168,6 +175,8 @@ export function CategoriesPage() {
               />
             </div>
           </div>
+
+          <ListPageStandardFilters open={filtersOpen} />
 
           {error && (
             <div className="flex items-center justify-center py-6">

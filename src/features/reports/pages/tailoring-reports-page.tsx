@@ -6,9 +6,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Scissors, Filter } from "lucide-react";
+import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 
 export function TailoringReportsPage() {
   const [summary, setSummary] = useState<TailoringReportSummary | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     getTailoringReportMock().then((response) => setSummary(response.data));
@@ -28,11 +30,13 @@ export function TailoringReportsPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" disabled><Filter className="h-4 w-4 ml-1.5" />فترة زمنية</Button>
-            <Button variant="outline" disabled><Filter className="h-4 w-4 ml-1.5" />الفرع</Button>
+            <Button variant="outline" onClick={() => setFiltersOpen((v) => !v)}><Filter className="h-4 w-4 ml-1.5" />فترة زمنية</Button>
+            <Button variant="outline" onClick={() => setFiltersOpen((v) => !v)}><Filter className="h-4 w-4 ml-1.5" />الفرع</Button>
           </div>
         </CardHeader>
       </Card>
+
+      <ListPageStandardFilters open={filtersOpen} />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>

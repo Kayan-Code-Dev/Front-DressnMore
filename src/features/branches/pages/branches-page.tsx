@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import { isModuleLive } from "@/config/feature-flags";
 import type { BranchItem } from "@/features/branches/types/branches.types";
 import { listBranchesMock } from "@/features/branches/services/branches.mock.service";
@@ -77,6 +78,7 @@ function TableSkeletonRows({ rows = 5, cols = 9 }: { rows?: number; cols?: numbe
 
 export function BranchesPage() {
   const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<BranchItem[]>([]);
@@ -155,7 +157,7 @@ export function BranchesPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" disabled>
+            <Button variant="outline" onClick={() => setFiltersOpen((v) => !v)}>
               <Filter className="h-4 w-4 ml-1.5" />
               الفلاتر
             </Button>
@@ -178,6 +180,8 @@ export function BranchesPage() {
               />
             </div>
           </div>
+
+          <ListPageStandardFilters open={filtersOpen} />
 
           {error && (
             <div className="flex items-center justify-center py-6">

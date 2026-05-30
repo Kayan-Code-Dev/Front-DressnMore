@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
 import { isModuleLive } from "@/config/feature-flags";
 import { mockTenantLogin } from "@/features/auth/services/auth.mock.service";
@@ -18,7 +18,8 @@ import {
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [workspace, setWorkspace] = useState("");
+  const [searchParams] = useSearchParams();
+  const [workspace, setWorkspace] = useState(() => searchParams.get("workspace")?.trim() ?? "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,13 @@ export function LoginPage() {
   const [fieldErrors, setFieldErrors] = useState<ValidationErrors>({});
   const [loginError, setLoginError] = useState(false);
   const [loginErrorMessage, setLoginErrorMessage] = useState("");
+
+  useEffect(() => {
+    const fromQuery = searchParams.get("workspace")?.trim();
+    if (fromQuery) {
+      setWorkspace(fromQuery);
+    }
+  }, [searchParams]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
