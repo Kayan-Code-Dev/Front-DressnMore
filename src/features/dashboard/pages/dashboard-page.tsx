@@ -1,42 +1,85 @@
 import { useEffect, useState } from "react";
 import { getDashboardMock } from "@/features/dashboard/services/dashboard.mock.service";
 import type { DashboardSummary } from "@/features/dashboard/types/dashboard.types";
-import { KpiCard } from "@/features/dashboard/components/kpi-card";
-import { TableSkeleton } from "@/shared/components/loading/table-skeleton";
+import {
+  DashboardHeader,
+  DashboardKpis,
+  DashboardSalesAndFinancial,
+  DashboardDistributions,
+  DashboardFooter,
+  DashboardSkeleton,
+  DashboardError,
+} from "@/features/dashboard/components";
 
 export function DashboardPage() {
   const [state, setState] = useState<DashboardSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    getDashboardMock().then((response) => setState(response.data));
+    let cancelled = false;
+    getDashboardMock()
+      .then((response) => {
+        if (!cancelled) {
+          setState(response.data);
+          setError(null);
+          setLoading(false);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          const msg = err instanceof Error ? err.message : "خطأ غير معروف";
+          setError(msg);
+          setLoading(false);
+        }
+      });
+    return () => { cancelled = true; };
   }, []);
 
-  if (!state) {
-    return <TableSkeleton rows={4} columns={4} />;
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  if (error) {
+    return <DashboardError message={error} />;
   }
 
   return (
-    <section className="dashboard-page">
-      <div className="page-title">
-        <h2>Dashboard</h2>
-        <p>Visual foundation uses mock widgets only.</p>
-      </div>
+    <div className="space-y-4 fade-in">
+      <DashboardHeader
+        periodLabel="هذا الشهر"
+        showFilters={showFilters}
+        onToggleFilters={() => setShowFilters((p) => !p)}
+      />
 
-      <div className="kpi-grid">
-        {state.kpis.map((kpi) => (
-          <KpiCard key={kpi.key} label={kpi.label} value={kpi.value} trend={kpi.trend} />
-        ))}
-      </div>
+      <DashboardKpis
+        data={{
+          totalRevenue: state?.kpiData?.totalRevenue ?? 128400,
+          orderCount: state?.kpiData?.orderCount ?? 1248,
+          totalPayments: state?.kpiData?.totalPayments ?? 96500,
+          activeClients: state?.kpiData?.activeClients ?? 436,
+          totalClients: state?.kpiData?.totalClients ?? 580,
+          clientGrowthRate: state?.kpiData?.clientGrowthRate ?? 3.7,
+          availableItems: state?.kpiData?.availableItems ?? 312,
+          utilizationRate: state?.kpiData?.utilizationRate ?? 35.7,
+          profit: state?.financialData?.profit ?? 86100,
+          profitMargin: state?.financialData?.profitMargin ?? 67.1,
+        }}
+      />
 
-      <div className="insight-grid">
-        {state.cards.map((card) => (
-          <article className="insight-card" key={card.title}>
-            <h3>{card.title}</h3>
-            <strong>{card.value}</strong>
-            <p>{card.note}</p>
-          </article>
-        ))}
-      </div>
-    </section>
+      <DashboardSalesAndFinancial
+        financial={{
+          totalIncome: state?.financialData?.totalIncome ?? 128400,
+          totalExpenses: state?.financialData?.totalExpenses ?? 42300,
+          profit: state?.financialData?.profit ?? 86100,
+          profitMargin: state?.financialData?.profitMargin ?? 67.1,
+        }}
+      />
+
+      <DashboardDistributions />
+
+      <DashboardFooter />
+    </div>
   );
 }

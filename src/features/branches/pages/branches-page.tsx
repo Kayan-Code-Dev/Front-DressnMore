@@ -1,19 +1,78 @@
 import { useEffect, useMemo, useState } from "react";
-import { DataTable, type DataTableColumn } from "@/shared/components/data-table/data-table";
-import { Pagination } from "@/shared/components/data-table/pagination";
-import { SearchFiltersBar } from "@/shared/components/filters/search-filters-bar";
-import { Dialog } from "@/shared/ui/dialog";
-import { Button } from "@/shared/ui/button";
 import { isModuleLive } from "@/config/feature-flags";
 import type { BranchItem } from "@/features/branches/types/branches.types";
 import { listBranchesMock } from "@/features/branches/services/branches.mock.service";
 import { listBranches } from "@/features/branches/services/branches.api.service";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Building2,
+  Search,
+  Plus,
+  Filter,
+  Pencil,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 function fetchBranchData(searchTerm: string, currentPage: number) {
   if (isModuleLive("branches")) {
     return listBranches({ search: searchTerm, page: currentPage, per_page: 15 });
   }
   return listBranchesMock(searchTerm);
+}
+
+const statusMap: Record<string, { label: string; variant: "success" | "destructive" }> = {
+  active: { label: "نشط", variant: "success" },
+  inactive: { label: "غير نشط", variant: "destructive" },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const config = statusMap[status] ?? { label: status, variant: "destructive" };
+  return <Badge variant={config.variant}>{config.label}</Badge>;
+}
+
+function TableSkeletonRows({ rows = 5, cols = 9 }: { rows?: number; cols?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, i) => (
+        <TableRow key={i}>
+          {Array.from({ length: cols }).map((__, j) => (
+            <TableCell key={j} className="text-center">
+              <Skeleton className="h-5 w-full max-w-[100px] mx-auto" />
+            </TableCell>
+          ))}
+        </TableRow>
+      ))}
+    </>
+  );
 }
 
 export function BranchesPage() {
@@ -23,6 +82,7 @@ export function BranchesPage() {
   const [rows, setRows] = useState<BranchItem[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [dialog, setDialog] = useState<null | "create" | "edit" | "delete">(null);
 
   const handleSearchChange = (value: string) => {
@@ -43,8 +103,9 @@ export function BranchesPage() {
       .then((response) => {
         if (cancelled) return;
         setRows(response.data);
-        const meta = response.meta as { last_page?: number } | null | undefined;
+        const meta = response.meta as { last_page?: number; total?: number } | null | undefined;
         setTotalPages(meta?.last_page ?? 1);
+        setTotal(meta?.total ?? response.data.length);
         setError(null);
       })
       .catch((err: unknown) => {
@@ -59,77 +120,195 @@ export function BranchesPage() {
     return () => { cancelled = true; };
   }, [search, page]);
 
-  const columns = useMemo<DataTableColumn<BranchItem>[]>(
+  const columns = useMemo(
     () => [
-      { key: "branch_code", title: "Branch Code" },
-      { key: "name", title: "Name" },
-      { key: "phone", title: "Phone" },
-      { key: "address", title: "Address" },
-      { key: "inventory_name", title: "Inventory" },
-      { key: "currency", title: "Currency" },
-      { key: "vat", title: "VAT" },
-      {
-        key: "status",
-        title: "Status",
-        render: (item) => <span className={`pill pill-${item.status}`}>{item.status}</span>,
-      },
-      {
-        key: "actions",
-        title: "Actions",
-        render: () => (
-          <div className="row-actions">
-            <Button variant="secondary" onClick={() => setDialog("edit")}>Edit</Button>
-            <Button variant="secondary" onClick={() => setDialog("delete")}>Delete</Button>
-          </div>
-        ),
-      },
+      { key: "id", title: "#" },
+      { key: "branch_code", title: "كود الفرع" },
+      { key: "name", title: "الاسم" },
+      { key: "phone", title: "الهاتف" },
+      { key: "address", title: "العنوان" },
+      { key: "inventory_name", title: "المخزن" },
+      { key: "currency", title: "العملة" },
+      { key: "vat", title: "الضريبة" },
+      { key: "status", title: "الحالة" },
+      { key: "actions", title: "إجراءات" },
     ],
     []
   );
 
   return (
-    <section>
-      <div className="page-title">
-        <h2>Branches</h2>
-      </div>
-
-      <SearchFiltersBar
-        search={search}
-        onSearchChange={handleSearchChange}
-        searchPlaceholder="Search branches"
-        rightSlot={
-          <>
-            <Button variant="secondary" disabled>
-              Filters (TODO)
+    <div className="w-full">
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: "linear-gradient(135deg, #7C3AED, #A78BFA)" }}
+            >
+              <Building2 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-lg font-black" style={{ color: "var(--color-text-primary)" }}>
+                إدارة الفروع
+              </CardTitle>
+              <CardDescription>عرض وتعديل وإنشاء الفروع في النظام.</CardDescription>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" disabled>
+              <Filter className="h-4 w-4 ml-1.5" />
+              الفلاتر
             </Button>
-            <Button onClick={() => setDialog("create")}>Create Branch</Button>
-          </>
-        }
-      />
+            <Button onClick={() => setDialog("create")}>
+              <Plus className="h-4 w-4 ml-1.5" />
+              إنشاء فرع جديد
+            </Button>
+          </div>
+        </CardHeader>
 
-      {error ? <p className="form-error">{error}</p> : null}
+        <CardContent>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="بحث عن فرع..."
+                className="pr-9"
+              />
+            </div>
+          </div>
 
-      <DataTable
-        columns={columns}
-        rows={rows}
-        loading={loading}
-        emptyTitle="No branches"
-        emptyDescription="No branch matches current search."
-        rowKey={(row) => String(row.id)}
-      />
+          {error && (
+            <div className="flex items-center justify-center py-6">
+              <p className="text-destructive text-sm">
+                حدث خطأ أثناء تحميل البيانات: {error}
+              </p>
+            </div>
+          )}
 
-      {!loading && totalPages > 1 ? (
-        <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
-      ) : null}
+          {!error && (
+            <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    {columns.map((col) => (
+                      <TableHead key={col.key} className="text-center font-bold text-xs">
+                        {col.title}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableSkeletonRows rows={5} cols={columns.length} />
+                  ) : rows.length > 0 ? (
+                    rows.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell className="text-center text-muted-foreground">{row.id}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="font-mono">{row.branch_code}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center font-medium">{row.name}</TableCell>
+                        <TableCell className="text-center" dir="ltr">{row.phone || "—"}</TableCell>
+                        <TableCell className="text-center text-muted-foreground text-xs max-w-[180px] truncate">
+                          {row.address || "—"}
+                        </TableCell>
+                        <TableCell className="text-center text-muted-foreground">{row.inventory_name || "—"}</TableCell>
+                        <TableCell className="text-center">{row.currency || "—"}</TableCell>
+                        <TableCell className="text-center">{row.vat || "—"}</TableCell>
+                        <TableCell className="text-center">
+                          <StatusBadge status={row.status} />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2 justify-center">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="تعديل"
+                              onClick={() => setDialog("edit")}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              title="حذف"
+                              onClick={() => setDialog("delete")}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={columns.length} className="py-10 text-center text-muted-foreground">
+                        لا توجد فروع لعرضها.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
 
-      <Dialog
-        open={dialog !== null}
-        title="Placeholder action"
-        onClose={() => setDialog(null)}
-        footer={<Button onClick={() => setDialog(null)}>Close</Button>}
-      >
-        <p>{dialog ? `${dialog.toUpperCase()} branch UI placeholder.` : ""}</p>
+        <CardFooter className="flex items-center justify-between flex-wrap gap-3">
+          <p className="text-sm text-muted-foreground">
+            إجمالي الفروع: <span className="font-bold">{total}</span>
+          </p>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => handlePageChange(page - 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+                السابق
+              </Button>
+              <span className="text-sm text-muted-foreground px-2">
+                {page} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => handlePageChange(page + 1)}
+              >
+                التالي
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </CardFooter>
+      </Card>
+
+      <Dialog open={dialog !== null} onOpenChange={() => setDialog(null)}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>
+              {dialog === "create" ? "إنشاء فرع جديد" : dialog === "edit" ? "تعديل الفرع" : "حذف الفرع"}
+            </DialogTitle>
+            <DialogDescription>
+              {dialog === "create"
+                ? "أدخل بيانات الفرع الجديد."
+                : dialog === "edit"
+                  ? "عدّل بيانات الفرع المحدد."
+                  : "هل أنت متأكد أنك تريد حذف هذا الفرع؟"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 text-sm text-muted-foreground">
+            سيتم تفعيل هذه الميزة قريباً.
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialog(null)}>إغلاق</Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
-    </section>
+    </div>
   );
 }

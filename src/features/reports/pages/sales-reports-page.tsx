@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
-import { DataTable, type DataTableColumn } from "@/shared/components/data-table/data-table";
-import { SearchFiltersBar } from "@/shared/components/filters/search-filters-bar";
-import { Button } from "@/shared/ui/button";
 import type { SalesReportSummary } from "@/features/reports/types/reports.types";
 import { getSalesReportMock } from "@/features/reports/services/reports.mock.service";
-
-type SalesPlaceholderRow = {
-  metric: string;
-  value: string;
-};
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TrendingUp, Filter } from "lucide-react";
 
 export function SalesReportsPage() {
   const [summary, setSummary] = useState<SalesReportSummary | null>(null);
@@ -17,54 +14,77 @@ export function SalesReportsPage() {
     getSalesReportMock().then((response) => setSummary(response.data));
   }, []);
 
-  const rows: SalesPlaceholderRow[] = summary
-    ? [
-        { metric: "Total Sales", value: summary.total_sales.toLocaleString() },
-        { metric: "Invoices Count", value: String(summary.invoices_count) },
-        { metric: "Average Invoice Value", value: summary.average_invoice_value.toLocaleString() },
-      ]
-    : [];
-
-  const columns: DataTableColumn<SalesPlaceholderRow>[] = [
-    { key: "metric", title: "Metric" },
-    { key: "value", title: "Value" },
-  ];
-
   return (
-    <section>
-      <div className="page-title">
-        <h2>Sales Reports</h2>
-        <p>Mock sales reports with filters and placeholder summary table.</p>
+    <div className="w-full space-y-6">
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #059669, #34D399)" }}>
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-lg font-black" style={{ color: "var(--color-text-primary)" }}>تقرير المبيعات</CardTitle>
+              <CardDescription>ملخص بيانات المبيعات والفواتير.</CardDescription>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" disabled><Filter className="h-4 w-4 ml-1.5" />فترة زمنية</Button>
+            <Button variant="outline" disabled><Filter className="h-4 w-4 ml-1.5" />الفرع</Button>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground mb-1">إجمالي المبيعات</p>
+            {summary ? <p className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>{summary.total_sales.toLocaleString()}</p> : <Skeleton className="h-8 w-32" />}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground mb-1">عدد الفواتير</p>
+            {summary ? <p className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>{summary.invoices_count}</p> : <Skeleton className="h-8 w-20" />}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground mb-1">متوسط قيمة الفاتورة</p>
+            {summary ? <p className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>{summary.average_invoice_value.toLocaleString()}</p> : <Skeleton className="h-8 w-28" />}
+          </CardContent>
+        </Card>
       </div>
 
-      <SearchFiltersBar
-        search={""}
-        onSearchChange={() => {}}
-        searchPlaceholder="Search sales report"
-        rightSlot={
-          <>
-            <Button variant="secondary" disabled>Date From</Button>
-            <Button variant="secondary" disabled>Date To</Button>
-            <Button variant="secondary" disabled>Branch</Button>
-            <Button variant="secondary" disabled>Employee</Button>
-          </>
-        }
-      />
-
-      <div className="insight-grid">
-        <article className="insight-card"><h3>Total Sales</h3><strong>{summary?.total_sales.toLocaleString() ?? "..."}</strong></article>
-        <article className="insight-card"><h3>Invoices</h3><strong>{summary?.invoices_count ?? "..."}</strong></article>
-        <article className="insight-card"><h3>Average Invoice</h3><strong>{summary?.average_invoice_value.toLocaleString() ?? "..."}</strong></article>
-      </div>
-
-      <DataTable
-        columns={columns}
-        rows={rows}
-        loading={summary === null}
-        emptyTitle="No report data"
-        emptyDescription="Sales report data is not available."
-        rowKey={(row) => row.metric}
-      />
-    </section>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30">
+                  <TableHead className="text-center font-bold text-xs">المقياس</TableHead>
+                  <TableHead className="text-center font-bold text-xs">القيمة</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {summary ? (
+                  <>
+                    <TableRow><TableCell className="text-center">إجمالي المبيعات</TableCell><TableCell className="text-center font-medium">{summary.total_sales.toLocaleString()}</TableCell></TableRow>
+                    <TableRow><TableCell className="text-center">عدد الفواتير</TableCell><TableCell className="text-center font-medium">{summary.invoices_count}</TableCell></TableRow>
+                    <TableRow><TableCell className="text-center">متوسط قيمة الفاتورة</TableCell><TableCell className="text-center font-medium">{summary.average_invoice_value.toLocaleString()}</TableCell></TableRow>
+                  </>
+                ) : (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="text-center"><Skeleton className="h-5 w-full max-w-[120px] mx-auto" /></TableCell>
+                      <TableCell className="text-center"><Skeleton className="h-5 w-full max-w-[80px] mx-auto" /></TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
