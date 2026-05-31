@@ -92,6 +92,8 @@ export function CustomCalendar({ value, onChange, placeholder, disabled }: Custo
                         mode="single"
                         selected={date}
                         captionLayout="dropdown"
+                        fromYear={1900}
+                        toYear={2100}
                         month={month}
                         onMonthChange={setMonth}
                         onSelect={(selectedDate) => {

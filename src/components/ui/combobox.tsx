@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks, react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any */
 import * as React from "react"
 import { Check, ChevronsUpDown, X } from "lucide-react"
 

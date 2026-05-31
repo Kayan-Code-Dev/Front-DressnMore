@@ -199,6 +199,10 @@ export function SimpleDateTimePicker({
               mode="single"
               selected={internalDate}
               captionLayout="dropdown"
+              fromDate={calculatedMinDate}
+              toDate={calculatedMaxDate}
+              fromYear={calculatedMinDate?.getFullYear() || 1970}
+              toYear={calculatedMaxDate?.getFullYear() || 2100}
               disabled={isDateDisabled}
               onSelect={handleDateSelect}
             />

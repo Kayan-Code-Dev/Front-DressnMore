@@ -1,0 +1,16 @@
+---
+description: Auto commit and push after every code change session
+alwaysApply: true
+---
+
+# Auto Commit & Push
+
+After completing any code changes in this project:
+
+1. Run `git add -A` to stage all relevant changes.
+2. Create a concise commit message describing the **why** (1-2 sentences).
+3. Commit immediately — do not wait for the user to ask.
+4. Push to the current branch on `origin` (`git push origin HEAD`).
+5. Never commit secrets (`.env`, credentials, tokens).
+
+Skip auto-commit only when the user explicitly says not to commit, or when there are no file changes.

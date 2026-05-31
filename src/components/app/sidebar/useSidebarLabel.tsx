@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { useSession } from "@/shared/lib/auth/session.store";
+import { useAuthStore } from "@/zustand-stores/auth.store";
 import type { SidebarLabel } from "./constants";
 
 export function useSidebarPermissions(): string[] {
-  return useSession((s) => s.permissions);
+  return useAuthStore((s) => s.loginData?.permissions ?? []);
 }
 
 function normalizePermissions(value: unknown): string[] {

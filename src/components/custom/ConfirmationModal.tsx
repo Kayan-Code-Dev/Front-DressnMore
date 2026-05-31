@@ -1,61 +1,54 @@
-import type { ReactNode } from "react";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import { cloneElement, ReactElement, ReactNode, useState } from "react";
 
-type ConfirmationModalProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  description?: ReactNode;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  variant?: "default" | "destructive";
-  onConfirm: () => void;
-  loading?: boolean;
+type Props = {
+    alertTitle: string;
+    alertMessage: ReactNode;
+    handleConfirmation: (onCloseModal: () => void) => void;
+    isPending: boolean;
+    confirmButtonClassName?: string;
+    cancelButtonClassName?: string;
+    pendingLabel: string;
+    confirmLabel: string;
+    children: ReactElement<{ onClick?: () => void }>
 };
 
-export function ConfirmationModal({
-  open,
-  onOpenChange,
-  title,
-  description,
-  confirmLabel = "تأكيد",
-  cancelLabel = "إلغاء",
-  variant = "default",
-  onConfirm,
-  loading = false,
-}: ConfirmationModalProps) {
-  return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent dir="rtl">
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          {description && (
-            <AlertDialogDescription>{description}</AlertDialogDescription>
-          )}
-        </AlertDialogHeader>
-        <AlertDialogFooter className="gap-2 sm:gap-2">
-          <AlertDialogCancel disabled={loading}>{cancelLabel}</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={loading}
-            onClick={(event) => {
-              event.preventDefault();
-              onConfirm();
-            }}
-            className={variant === "destructive" ? "bg-destructive hover:bg-destructive/90" : undefined}
-          >
-            {confirmLabel}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
+export function ConfirmationModal({ alertTitle, alertMessage, handleConfirmation, isPending, confirmButtonClassName, cancelButtonClassName, pendingLabel, confirmLabel, children }: Props) {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    return (
+        <>
+            {cloneElement(children, { onClick: () => setIsModalOpen(true) })}
+            <AlertDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-center">{alertTitle}</AlertDialogTitle>
+                        <AlertDialogDescription className="text-center">
+                            {alertMessage}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className={cancelButtonClassName}>إلغاء</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => handleConfirmation(() => setIsModalOpen(false))}
+                            disabled={isPending}
+                            className={cn("bg-destructive text-white hover:bg-destructive/90", confirmButtonClassName)}
+                        >
+                            {isPending ? pendingLabel : confirmLabel}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
+    );
 }

@@ -3,7 +3,7 @@ import { useState, useEffect, type CSSProperties } from "react";
 import { LogOut, ChevronDown, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { sidebarLabels } from "@/components/app/sidebar/constants";
 import useSidebarLabel, { useSidebarPermissions } from "@/components/app/sidebar/useSidebarLabel";
-import { sessionStore, useSession } from "@/shared/lib/auth/session.store";
+import { useAuthStore } from "@/zustand-stores/auth.store";
 import type { SidebarLabel } from "@/components/app/sidebar/constants";
 import dressnmoreLogo from "@/assets/dressnmore-logo.jpg";
 
@@ -41,7 +41,8 @@ export default function ProjectSidebar({
   const permissions = useSidebarPermissions();
   const navItems = useSidebarLabel(sidebarLabels, permissions);
   const [openGroups, setOpenGroups] = useState<string[]>([]);
-  const user = useSession((s) => s.user) as { name?: string } | null;
+  const user = useAuthStore((s) => s.loginData?.user) ?? null;
+  const logout = useAuthStore((s) => s.logout);
   const displayName = user?.name ?? "المستخدم";
   const userInitials = (displayName || "م")
     .split(" ")
@@ -284,7 +285,7 @@ export default function ProjectSidebar({
         <div
           className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-150 cursor-pointer"
           onClick={() => {
-            sessionStore.clearSession();
+            logout();
             navigate("/login");
           }}
           onMouseEnter={(e) => {
