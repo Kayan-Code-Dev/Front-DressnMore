@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import type { EmployeeCustodyItem } from "@/features/employees/types/employees.types";
+import { listEmployeeCustodies } from "@/features/employees/services/employees.api.service";
 import { listEmployeeCustodiesMock } from "@/features/employees/services/employees.mock.service";
 import {
   Card,
@@ -75,7 +77,11 @@ export function EmployeeCustodiesPage() {
 
   useEffect(() => {
     let cancelled = false;
-    listEmployeeCustodiesMock(search)
+    const load = isModuleLive("employees")
+      ? () => listEmployeeCustodies({ search, per_page: 100 })
+      : () => listEmployeeCustodiesMock(search);
+
+    load()
       .then((response) => {
         if (cancelled) return;
         setRows(response.data);

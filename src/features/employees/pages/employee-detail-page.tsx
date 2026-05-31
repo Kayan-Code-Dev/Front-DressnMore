@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
 import type { EmployeeItem } from "@/features/employees/types/employees.types";
+import { getEmployee } from "@/features/employees/services/employees.api.service";
 import { getEmployeeMock } from "@/features/employees/services/employees.mock.service";
 import {
   Card,
@@ -40,7 +42,11 @@ export function EmployeeDetailPage() {
 
   useEffect(() => {
     let cancelled = false;
-    getEmployeeMock(employeeId)
+    const load = isModuleLive("employees")
+      ? () => getEmployee(employeeId).then((data) => ({ data }))
+      : () => getEmployeeMock(employeeId);
+
+    load()
       .then((response) => {
         if (cancelled) return;
         setEmployee(response.data);

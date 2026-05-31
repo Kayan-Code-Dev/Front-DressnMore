@@ -1,30 +1,26 @@
-import { fetchMe } from "@/features/auth/services/auth.api.service";
 import { httpClient } from "@/shared/lib/http/client";
 import { tenantPath } from "@/config/api";
 import type { ApiSuccess } from "@/shared/types/api";
 import type {
   RenewSubscriptionPayload,
   SubscriptionOverview,
+  SubscriptionPaymentGateway,
   TenantSubscription,
   UpgradeSubscriptionPayload,
 } from "@/features/subscriptions/types/subscription.types";
 
 export async function getSubscriptionOverview(): Promise<ApiSuccess<SubscriptionOverview>> {
-  const response = await fetchMe();
-  if (!response.success || !response.data) {
-    throw new Error(response.message ?? "Failed to load subscription");
-  }
+  const response = await httpClient.get<SubscriptionOverview>(tenantPath("/subscription/overview"));
+  if (!response.success) throw new Error(response.message);
+  return response as ApiSuccess<SubscriptionOverview>;
+}
 
-  return {
-    success: true,
-    message: response.message,
-    data: {
-      subscription: response.data.subscription,
-      tenant: response.data.tenant,
-      available_plans: [],
-    },
-    meta: null,
-  };
+export async function listSubscriptionPaymentGateways(): Promise<SubscriptionPaymentGateway[]> {
+  const response = await httpClient.get<SubscriptionPaymentGateway[]>(
+    tenantPath("/subscription/payment-gateways"),
+  );
+  if (!response.success) throw new Error(response.message);
+  return response.data;
 }
 
 export async function renewSubscription(

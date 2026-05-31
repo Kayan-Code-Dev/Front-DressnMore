@@ -44,4 +44,19 @@ export type RenewSubscriptionPayload = {
 
 export type UpgradeSubscriptionPayload = {
   plan_code: string;
+  payment_gateway_id?: number;
+  mock_payment_confirmed?: boolean;
+};
+
+export type SubscriptionPaymentGateway = {
+  id: string;
+  name: string;
+  type: string;
+  account_holder: string;
+  account_number: string;
+  bank_name?: string | null;
+  iban?: string | null;
+  instructions?: string | null;
+  is_active: boolean;
+  display_order: number;
 };

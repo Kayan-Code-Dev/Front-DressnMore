@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import type { FactoryItem } from "@/features/factory/types/factory.types";
+import { listFactories } from "@/features/factory/services/factory.api.service";
 import { listFactoriesMock } from "@/features/factory/services/factory.mock.service";
 import {
   Card,
@@ -65,7 +67,11 @@ export function FactoryPage() {
 
   useEffect(() => {
     let cancelled = false;
-    listFactoriesMock(search)
+    const load = isModuleLive("factory")
+      ? () => listFactories({ search, per_page: 100 })
+      : () => listFactoriesMock(search);
+
+    load()
       .then((response) => {
         if (cancelled) return;
         setRows(response.data);

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import type { EmployeeSalaryItem, SalaryStats } from "@/features/employees/types/employees.types";
+import { listEmployeeSalaries } from "@/features/employees/services/employees.api.service";
 import { listEmployeeSalariesMock } from "@/features/employees/services/employees.mock.service";
 import {
   Card,
@@ -56,7 +58,11 @@ export function EmployeeSalariesPage() {
 
   useEffect(() => {
     let cancelled = false;
-    listEmployeeSalariesMock(search)
+    const load = isModuleLive("employees")
+      ? () => listEmployeeSalaries({ search, per_page: 100 })
+      : () => listEmployeeSalariesMock(search);
+
+    load()
       .then((response) => {
         if (cancelled) return;
         setRows(response.data);

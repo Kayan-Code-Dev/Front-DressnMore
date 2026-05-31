@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import type { WorkshopItem } from "@/features/workshop/types/workshop.types";
+import { listWorkshops } from "@/features/workshop/services/workshop.api.service";
 import { listWorkshopsMock } from "@/features/workshop/services/workshop.mock.service";
 import {
   Card,
@@ -66,7 +68,11 @@ export function WorkshopPage() {
 
   useEffect(() => {
     let cancelled = false;
-    listWorkshopsMock(search)
+    const load = isModuleLive("workshop")
+      ? () => listWorkshops({ search, per_page: 100 })
+      : () => listWorkshopsMock(search);
+
+    load()
       .then((response) => {
         if (cancelled) return;
         setRows(response.data);

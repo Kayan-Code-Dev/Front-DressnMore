@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import type { EmployeeItem, EmployeeStats } from "@/features/employees/types/employees.types";
+import { listEmployees } from "@/features/employees/services/employees.api.service";
 import { listEmployeesMock } from "@/features/employees/services/employees.mock.service";
 import {
   Card,
@@ -100,7 +102,11 @@ export function EmployeesPage() {
 
   useEffect(() => {
     let cancelled = false;
-    listEmployeesMock(search)
+    const load = isModuleLive("employees")
+      ? () => listEmployees({ search, per_page: 100 })
+      : () => listEmployeesMock(search);
+
+    load()
       .then((response) => {
         if (cancelled) return;
         setRows(response.data);

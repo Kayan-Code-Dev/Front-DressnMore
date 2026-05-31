@@ -1,21 +1,37 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { isModuleLive } from "@/config/feature-flags";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { AccountProfile } from "@/features/settings/types/settings.types";
 import { getAccountSettingsMock } from "@/features/settings/services/settings.mock.service";
-import { getAccountProfile, updateAccountProfile } from "@/features/settings/services/settings.api.service";
+import {
+  deleteAccount,
+  getAccountProfile,
+  updateAccountProfile,
+  updatePassword,
+} from "@/features/settings/services/settings.api.service";
+import { sessionStore } from "@/shared/lib/auth/session.store";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Settings, User, Lock, Trash2 } from "lucide-react";
 
 export function AccountSettingsPage() {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<AccountProfile | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const load = isModuleLive("settings") ? getAccountProfile : getAccountSettingsMock;
@@ -43,6 +59,52 @@ export function AccountSettingsPage() {
       setSaveMessage(err instanceof Error ? err.message : "تعذر حفظ الملف الشخصي.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage("كلمة المرور الجديدة غير متطابقة.");
+      return;
+    }
+    setPasswordSaving(true);
+    setPasswordMessage(null);
+    try {
+      if (isModuleLive("settings")) {
+        await updatePassword({
+          current_password: currentPassword,
+          password: newPassword,
+          password_confirmation: confirmPassword,
+        });
+      }
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordMessage("تم تحديث كلمة المرور.");
+    } catch (err: unknown) {
+      setPasswordMessage(err instanceof Error ? err.message : "تعذر تحديث كلمة المرور.");
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      setDeleteMessage("أدخل كلمة المرور للتأكيد.");
+      return;
+    }
+    setDeleting(true);
+    setDeleteMessage(null);
+    try {
+      if (isModuleLive("settings")) {
+        await deleteAccount({ password: deletePassword });
+      }
+      sessionStore.clearSession();
+      navigate("/login", { replace: true });
+    } catch (err: unknown) {
+      setDeleteMessage(err instanceof Error ? err.message : "تعذر حذف الحساب.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -118,17 +180,20 @@ export function AccountSettingsPage() {
               <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
                 <div className="space-y-2">
                   <Label htmlFor="current-password">كلمة المرور الحالية</Label>
-                  <Input id="current-password" type="password" />
+                  <Input id="current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="new-password">كلمة المرور الجديدة</Label>
-                  <Input id="new-password" type="password" />
+                  <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">تأكيد كلمة المرور</Label>
-                  <Input id="confirm-password" type="password" />
+                  <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 </div>
-                <Button>تحديث كلمة المرور</Button>
+                <Button type="button" disabled={passwordSaving} onClick={handleUpdatePassword}>
+                  {passwordSaving ? "جاري التحديث..." : "تحديث كلمة المرور"}
+                </Button>
+                {passwordMessage ? <p className="text-sm text-muted-foreground">{passwordMessage}</p> : null}
               </form>
             </CardContent>
           </Card>
@@ -142,7 +207,18 @@ export function AccountSettingsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">هذا الإجراء غير قابل للتراجع. سيتم حذف جميع البيانات المرتبطة بحسابك.</p>
-              <Button variant="destructive" disabled>حذف الحساب</Button>
+              <div className="space-y-3">
+                <Input
+                  type="password"
+                  placeholder="كلمة المرور للتأكيد"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                />
+                <Button variant="destructive" disabled={deleting} onClick={handleDeleteAccount}>
+                  {deleting ? "جاري الحذف..." : "حذف الحساب"}
+                </Button>
+                {deleteMessage ? <p className="text-sm text-destructive">{deleteMessage}</p> : null}
+              </div>
             </CardContent>
           </Card>
         </div>

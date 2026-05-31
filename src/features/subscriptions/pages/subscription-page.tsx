@@ -3,9 +3,21 @@ import { isModuleLive } from "@/config/feature-flags";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { sessionStore, useSession } from "@/shared/lib/auth/session.store";
-import type { SubscriptionOverview, SubscriptionPlanOption } from "@/features/subscriptions/types/subscription.types";
+import type {
+  SubscriptionOverview,
+  SubscriptionPaymentGateway,
+  SubscriptionPlanOption,
+} from "@/features/subscriptions/types/subscription.types";
 import {
   getSubscriptionOverviewMock,
   renewSubscriptionMock,
@@ -13,6 +25,7 @@ import {
 } from "@/features/subscriptions/services/subscription.mock.service";
 import {
   getSubscriptionOverview,
+  listSubscriptionPaymentGateways,
   renewSubscription,
   upgradeSubscription,
 } from "@/features/subscriptions/services/subscription.api.service";
@@ -27,8 +40,7 @@ function renewPlan(payload = {}) {
   return isModuleLive("subscription") ? renewSubscription(payload) : renewSubscriptionMock(payload);
 }
 
-function upgradePlan(planCode: string) {
-  const payload = { plan_code: planCode };
+function upgradePlan(payload: { plan_code: string; payment_gateway_id?: number; mock_payment_confirmed?: boolean }) {
   return isModuleLive("subscription") ? upgradeSubscription(payload) : upgradeSubscriptionMock(payload);
 }
 
@@ -41,6 +53,16 @@ const statusLabels = {
 const accountTypeLabels = {
   free: "مجاني",
   paid: "مدفوع",
+};
+
+const gatewayTypeLabels: Record<string, string> = {
+  bank: "تحويل بنكي",
+  vodafone_cash: "فودافون كاش",
+  instapay: "انستاباي",
+  orange_cash: "أورنج كاش",
+  etisalat_cash: "اتصالات كاش",
+  fawry: "فوري",
+  other: "أخرى",
 };
 
 function PlanCard({
@@ -99,6 +121,11 @@ export function SubscriptionPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanOption | null>(null);
+  const [gateways, setGateways] = useState<SubscriptionPaymentGateway[]>([]);
+  const [selectedGatewayId, setSelectedGatewayId] = useState<string>("");
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   const loadOverview = () => {
     setLoading(true);
@@ -125,18 +152,62 @@ export function SubscriptionPage() {
     });
   };
 
+  const completeUpgrade = async (planCode: string, gatewayId?: number) => {
+    const response = await upgradePlan({
+      plan_code: planCode,
+      payment_gateway_id: gatewayId,
+      mock_payment_confirmed: gatewayId ? true : undefined,
+    });
+    syncSessionSubscription(response.data);
+    setMessage(response.message);
+    setPaymentOpen(false);
+    setSelectedPlan(null);
+    setPaymentConfirmed(false);
+    loadOverview();
+  };
+
   const handlePlanSelect = async (planCode: string) => {
     setActionLoading(true);
     setMessage(null);
     try {
       const plan = data?.available_plans.find((item) => item.code === planCode);
-      const response = plan?.account_type === "free"
-        ? await renewPlan({ extension_days: plan.billing_period_days ?? 30 })
-        : await upgradePlan(planCode);
+      if (!plan) return;
 
-      syncSessionSubscription(response.data);
-      setMessage(response.message);
-      loadOverview();
+      if (plan.account_type === "free") {
+        const response = await renewPlan({ extension_days: plan.billing_period_days ?? 30 });
+        syncSessionSubscription(response.data);
+        setMessage(response.message);
+        loadOverview();
+        return;
+      }
+
+      if (!isModuleLive("subscription")) {
+        const response = await upgradePlan({ plan_code: planCode });
+        syncSessionSubscription(response.data);
+        setMessage(response.message);
+        loadOverview();
+        return;
+      }
+
+      const rows = await listSubscriptionPaymentGateways();
+      setGateways(rows);
+      setSelectedPlan(plan);
+      setSelectedGatewayId("");
+      setPaymentConfirmed(false);
+      setPaymentOpen(true);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "حدث خطأ");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!selectedPlan || !selectedGatewayId || !paymentConfirmed) return;
+    setActionLoading(true);
+    setMessage(null);
+    try {
+      await completeUpgrade(selectedPlan.code, Number(selectedGatewayId));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "حدث خطأ");
     } finally {
@@ -245,6 +316,67 @@ export function SubscriptionPage() {
               ))}
         </div>
       </div>
+
+      <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
+        <DialogContent className="sm:max-w-lg" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>إتمام الدفع — {selectedPlan?.name}</DialogTitle>
+            <DialogDescription>
+              اختر بوابة الدفع المتاحة من الإدارة. الدفع حالياً وهمي لحين ربط بوابة الدفع الفعلية.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 max-h-72 overflow-y-auto">
+            {(gateways.length > 0 ? gateways : []).map((gateway) => (
+              <button
+                key={gateway.id}
+                type="button"
+                onClick={() => setSelectedGatewayId(gateway.id)}
+                className={`w-full text-right rounded-xl border p-4 transition-colors ${
+                  selectedGatewayId === gateway.id ? "border-blue-500 bg-blue-50" : "border-border"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold">{gateway.name}</span>
+                  <Badge variant="outline">{gatewayTypeLabels[gateway.type] ?? gateway.type}</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">{gateway.account_holder}</p>
+                <p className="text-sm font-mono mt-1" dir="ltr">{gateway.account_number}</p>
+                {gateway.instructions ? (
+                  <p className="text-xs text-muted-foreground mt-2">{gateway.instructions}</p>
+                ) : null}
+              </button>
+            ))}
+            {gateways.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                لا توجد بوابات دفع مفعّلة. يرجى التواصل مع الإدارة.
+              </p>
+            )}
+          </div>
+
+          <label className="flex items-start gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={paymentConfirmed}
+              onChange={(e) => setPaymentConfirmed(e.target.checked)}
+              className="mt-1"
+            />
+            <span>أؤكد أنني أتممت التحويل / الدفع (وضع تجريبي حتى ربط بوابة الدفع).</span>
+          </label>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setPaymentOpen(false)} disabled={actionLoading}>
+              إلغاء
+            </Button>
+            <Button
+              onClick={handleConfirmPayment}
+              disabled={actionLoading || !selectedGatewayId || !paymentConfirmed}
+            >
+              {actionLoading ? "جاري التفعيل..." : `تأكيد ودفع ${selectedPlan ? formatNumber(selectedPlan.price) : ""} ج.م`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

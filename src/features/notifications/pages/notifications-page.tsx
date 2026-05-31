@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
+import { isModuleLive } from "@/config/feature-flags";
 import type {
   NotificationCategory,
   NotificationItem,
   NotificationStats,
 } from "@/features/notifications/types/notifications.types";
+import {
+  deleteNotification,
+  listNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "@/features/notifications/services/notifications.api.service";
 import {
   listNotificationsMock,
   markNotificationReadMock,
@@ -87,13 +94,22 @@ export function NotificationsPage() {
 
   const loadNotifications = () => {
     setLoading(true);
-    listNotificationsMock({
-      search,
-      unread_only: activeTab === "unread",
-      category: activeTab !== "all" && activeTab !== "unread" ? activeTab : null,
-    })
+    const load = isModuleLive("notifications")
+      ? () => listNotifications({ search, per_page: 100 })
+      : () => listNotificationsMock({
+          search,
+          unread_only: activeTab === "unread",
+          category: activeTab !== "all" && activeTab !== "unread" ? activeTab : null,
+        });
+
+    load()
       .then((response) => {
         let data = response.data;
+        if (activeTab === "unread") {
+          data = data.filter((n) => !n.read_at);
+        } else if (activeTab !== "all") {
+          data = data.filter((n) => n.category === activeTab);
+        }
         if (priorityFilter !== "all") {
           data = data.filter((n) => n.priority === priorityFilter);
         }
@@ -112,17 +128,29 @@ export function NotificationsPage() {
   const filteredCount = useMemo(() => notifications.length, [notifications]);
 
   const handleMarkRead = async (id: number) => {
-    await markNotificationReadMock(id);
+    if (isModuleLive("notifications")) {
+      await markNotificationRead(id);
+    } else {
+      await markNotificationReadMock(id);
+    }
     loadNotifications();
   };
 
   const handleMarkAllRead = async () => {
-    await markAllNotificationsReadMock();
+    if (isModuleLive("notifications")) {
+      await markAllNotificationsRead();
+    } else {
+      await markAllNotificationsReadMock();
+    }
     loadNotifications();
   };
 
   const handleDelete = async (id: number) => {
-    await deleteNotificationMock(id);
+    if (isModuleLive("notifications")) {
+      await deleteNotification(id);
+    } else {
+      await deleteNotificationMock(id);
+    }
     loadNotifications();
   };
 

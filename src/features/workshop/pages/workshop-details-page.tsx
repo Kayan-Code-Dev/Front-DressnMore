@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
 import type { WorkshopItem, WorkshopTransferItem, WorkshopClothItem } from "@/features/workshop/types/workshop.types";
+import {
+  getWorkshop,
+  listWorkshopCloths,
+  listWorkshopTransfers,
+} from "@/features/workshop/services/workshop.api.service";
 import {
   getWorkshopMock,
   listWorkshopTransfersMock,
@@ -66,11 +72,20 @@ export function WorkshopDetailsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      getWorkshopMock(workshopId),
-      listWorkshopTransfersMock(workshopId),
-      listWorkshopClothsMock(workshopId),
-    ])
+    const live = isModuleLive("workshop");
+    Promise.all(
+      live
+        ? [
+            getWorkshop(workshopId).then((data) => ({ data })),
+            listWorkshopTransfers(workshopId, { per_page: 100 }),
+            listWorkshopCloths(workshopId, { per_page: 100 }),
+          ]
+        : [
+            getWorkshopMock(workshopId),
+            listWorkshopTransfersMock(workshopId),
+            listWorkshopClothsMock(workshopId),
+          ],
+    )
       .then(([workshopRes, transfersRes, clothsRes]) => {
         if (cancelled) return;
         setWorkshop(workshopRes.data);
