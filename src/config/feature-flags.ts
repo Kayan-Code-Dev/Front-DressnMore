@@ -1,3 +1,8 @@
+import { env } from "@/shared/lib/env/env";import { sessionStore } from "@/shared/lib/auth/session.store";
+import { moduleToPlanKey } from "@/config/plan-modules";
+
+const hasApiBackend = Boolean(env.apiBaseUrl && env.apiBaseUrl !== "http://localhost:3000");
+
 export type ModuleName =
   | "auth"
   | "lookups"
@@ -32,7 +37,7 @@ export type ModuleName =
   | "inventory";
 
 export const featureFlags = {
-  useMockServices: true,
+  useMockServices: !hasApiBackend,
 
   modules: {
     auth: true,
@@ -69,8 +74,21 @@ export const featureFlags = {
   } satisfies Record<ModuleName, boolean>,
 };
 
+export function isModuleEnabledByPlan(module: ModuleName): boolean {
+  const planKey = moduleToPlanKey[module];
+  if (!planKey) {
+    return featureFlags.modules[module];
+  }
+
+  return sessionStore.isPlanModuleEnabled(planKey);
+}
+
 export function isModuleLive(module: ModuleName): boolean {
-  return !featureFlags.useMockServices || featureFlags.modules[module];
+  if (featureFlags.useMockServices) {
+    return featureFlags.modules[module];
+  }
+
+  return isModuleEnabledByPlan(module);
 }
 
 export function resolveService<T>(module: ModuleName, mock: T, real: T): T {

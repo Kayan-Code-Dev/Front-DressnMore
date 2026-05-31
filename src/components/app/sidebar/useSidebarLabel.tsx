@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import { useSession } from "@/shared/lib/auth/session.store";
+import { isModuleLive, type ModuleName } from "@/config/feature-flags";
+import { resolveModuleForPath } from "@/config/plan-modules";
 import type { SidebarLabel } from "./constants";
 
 export function useSidebarPermissions(): string[] {
@@ -16,11 +18,24 @@ function normalizePermissions(value: unknown): string[] {
   return [];
 }
 
+function isItemVisibleByPlan(item: SidebarLabel): boolean {
+  const module = resolveModuleForPath(item.path);
+  if (!module) {
+    return true;
+  }
+
+  return isModuleLive(module as ModuleName);
+}
+
 function filterRecursive(
   labels: SidebarLabel[],
   userPermissions: Set<string>
 ): SidebarLabel[] {
   return labels.reduce((filteredList, item) => {
+    if (!isItemVisibleByPlan(item)) {
+      return filteredList;
+    }
+
     let filteredSubItems: SidebarLabel[] | undefined = undefined;
     if (item.subItems && item.subItems.length > 0) {
       filteredSubItems = filterRecursive(item.subItems, userPermissions);

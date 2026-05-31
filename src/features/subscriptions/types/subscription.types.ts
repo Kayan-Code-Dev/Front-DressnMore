@@ -7,10 +7,13 @@ export type TenantSubscription = {
   lifecycle_status: SubscriptionLifecycleStatus;
   plan_code: string;
   plan_name: string;
+  plan_id?: number | null;
   starts_at: string;
   expires_at: string | null;
   can_renew: boolean;
   days_remaining: number | null;
+  enabled_modules?: string[];
+  features?: Record<string, string>;
 };
 
 export type SubscriptionPlanOption = {

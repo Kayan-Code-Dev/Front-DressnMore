@@ -19,6 +19,7 @@ type SessionStoreShape = {
   setSession: (payload: SessionPayload) => void;
   clearSession: () => void;
   hasPermission: (permission: string) => boolean;
+  isPlanModuleEnabled: (planKey: string) => boolean;
   isAuthenticated: () => boolean;
   getTenantSlug: () => string | null;
   subscribe: (listener: () => void) => () => void;
@@ -72,6 +73,15 @@ export const sessionStore: SessionStoreShape = {
   hasPermission: (permission) => {
     if (!permission) return true;
     return state.permissions.includes(permission);
+  },
+
+  isPlanModuleEnabled: (planKey) => {
+    const modules = state.subscription?.enabled_modules;
+    if (modules === undefined) {
+      return true;
+    }
+
+    return modules.includes(planKey);
   },
 
   isAuthenticated: () => state.token !== null,
