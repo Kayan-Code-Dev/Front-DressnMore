@@ -107,14 +107,14 @@ export function DressTransferPage() {
                   <p className="font-bold">{dress.name}</p>
                   <p className="text-sm text-muted-foreground">
                     <Badge variant="outline" className="font-mono ml-2">{dress.code}</Badge>
-                    الفرع الحالي: <span className="font-semibold">{dress.branch}</span>
+                    الفرع الحالي: <span className="font-semibold">{dress.branch?.name ?? "—"}</span>
                   </p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label>الفرع الحالي</Label>
-                <Input value={dress.branch} disabled />
+                <Input value={dress.branch?.name ?? ""} disabled />
               </div>
 
               <div className="space-y-2">
@@ -125,7 +125,7 @@ export function DressTransferPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {branches
-                      .filter((b) => b !== dress.branch)
+                      .filter((b) => b !== dress.branch?.name)
                       .map((branch) => (
                         <SelectItem key={branch} value={branch}>
                           {branch}

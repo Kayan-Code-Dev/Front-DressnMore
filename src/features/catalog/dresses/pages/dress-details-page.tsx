@@ -135,8 +135,8 @@ export function DressDetailsPage() {
             {!loading && dress && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <DetailField label="القسم">{dress.category}</DetailField>
-                  <DetailField label="الفرع">{dress.branch}</DetailField>
+                  <DetailField label="القسم">{dress.category?.name ?? "—"}</DetailField>
+                  <DetailField label="الفرع">{dress.branch?.name ?? "—"}</DetailField>
                   <DetailField label="اللون">
                     <span className="flex items-center gap-1">
                       <Palette className="h-3.5 w-3.5" />
