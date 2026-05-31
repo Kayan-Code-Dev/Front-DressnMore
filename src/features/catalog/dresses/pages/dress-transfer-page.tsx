@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
 import type { DressItem } from "@/features/catalog/dresses/types/dresses.types";
+import { getDress, transferDress } from "@/features/catalog/dresses/services/dresses.api.service";
 import { getDressMock } from "@/features/catalog/dresses/services/dresses.mock.service";
+import { listBranches } from "@/features/branches/services/branches.api.service";
+import { listBranchesMock } from "@/features/branches/services/branches.mock.service";
+import type { BranchItem } from "@/features/branches/types/branches.types";
 import {
   Card,
   CardHeader,
@@ -34,21 +39,27 @@ import {
 import { dressDisplayName } from "@/features/catalog/dresses/lib/dress-display";
 import { ArrowLeftRight, ArrowRight, Shirt, Loader2 } from "lucide-react";
 
-const branches = ["القاهرة", "الإسكندرية", "الجيزة", "المنصورة"];
-
 export function DressTransferPage() {
   const { id } = useParams<{ id: string }>();
   const dressId = id ? Number(id) : 0;
   const [loading, setLoading] = useState(true);
   const [dress, setDress] = useState<DressItem | null>(null);
-  const [toBranch, setToBranch] = useState("");
+  const [branches, setBranches] = useState<BranchItem[]>([]);
+  const [toBranchId, setToBranchId] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const live = isModuleLive("dresses");
 
   useEffect(() => {
     let cancelled = false;
-    getDressMock(dressId)
+    const loadDress = live
+      ? () => getDress(dressId)
+      : () => getDressMock(dressId);
+
+    loadDress()
       .then((res) => {
         if (!cancelled) setDress(res.data);
       })
@@ -56,16 +67,57 @@ export function DressTransferPage() {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [dressId]);
+  }, [dressId, live]);
 
-  const onSubmit = (e: FormEvent) => {
+  useEffect(() => {
+    let cancelled = false;
+    const loadBranches = live
+      ? () => listBranches({ per_page: 100 })
+      : () => listBranchesMock();
+
+    loadBranches()
+      .then((response) => {
+        if (cancelled) return;
+        const rows = "data" in response ? response.data : [];
+        setBranches(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => {
+        if (!cancelled) setBranches([]);
+      });
+    return () => { cancelled = true; };
+  }, [live]);
+
+  const targetBranchName = useMemo(
+    () => branches.find((b) => String(b.id) === toBranchId)?.name ?? "",
+    [branches, toBranchId],
+  );
+
+  const availableBranches = useMemo(
+    () => branches.filter((branch) => branch.id !== dress?.branch?.id),
+    [branches, dress?.branch?.id],
+  );
+
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!toBranch) return;
+    if (!toBranchId) return;
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    setError(null);
+
+    try {
+      if (live) {
+        await transferDress(dressId, {
+          to_branch_id: Number(toBranchId),
+          notes: notes || undefined,
+        });
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      }
       setSuccessOpen(true);
-    }, 600);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to transfer dress");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -88,7 +140,7 @@ export function DressTransferPage() {
             </div>
             <div>
               <CardTitle className="text-lg font-black">تحويل فستان بين الفروع</CardTitle>
-              <CardDescription>طلب نقل فستان من فرع إلى آخر — واجهة عرض فقط.</CardDescription>
+              <CardDescription>نقل فستان من فرع إلى آخر مع تسجيل حركة المخزون.</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -115,19 +167,19 @@ export function DressTransferPage() {
 
               <div className="space-y-2">
                 <Label>الفرع الحالي</Label>
-                <Input value="—" disabled />
+                <Input value={dress.branch?.name ?? "—"} disabled />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="to-branch">الفرع المستهدف *</Label>
-                <Select value={toBranch} onValueChange={setToBranch}>
+                <Select value={toBranchId} onValueChange={setToBranchId}>
                   <SelectTrigger id="to-branch">
                     <SelectValue placeholder="اختر الفرع" />
                   </SelectTrigger>
                   <SelectContent>
-                    {branches.map((branch) => (
-                      <SelectItem key={branch} value={branch}>
-                        {branch}
+                    {availableBranches.map((branch) => (
+                      <SelectItem key={branch.id} value={String(branch.id)}>
+                        {branch.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -144,16 +196,18 @@ export function DressTransferPage() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={submitting || !toBranch}>
+              {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+              <Button type="submit" className="w-full" disabled={submitting || !toBranchId}>
                 {submitting ? (
                   <>
                     <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-                    جاري الإرسال...
+                    جاري التحويل...
                   </>
                 ) : (
                   <>
                     <ArrowLeftRight className="h-4 w-4 ml-2" />
-                    إرسال طلب التحويل
+                    تنفيذ التحويل
                   </>
                 )}
               </Button>
@@ -163,16 +217,16 @@ export function DressTransferPage() {
           )}
         </CardContent>
         <CardFooter>
-          <p className="text-xs text-muted-foreground">سيتم مراجعة طلب التحويل من قبل مدير الفرع المستهدف.</p>
+          <p className="text-xs text-muted-foreground">يتم تسجيل التحويل كحركة مخزون بين الفروع.</p>
         </CardFooter>
       </Card>
 
       <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
         <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>
-            <DialogTitle>تم إرسال الطلب</DialogTitle>
+            <DialogTitle>تم التحويل</DialogTitle>
             <DialogDescription>
-              طلب تحويل الفستان {dress?.name} إلى فرع {toBranch} قيد المراجعة.
+              تم تحويل الفستان {dress?.name} إلى فرع {targetBranchName || "المستهدف"}.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

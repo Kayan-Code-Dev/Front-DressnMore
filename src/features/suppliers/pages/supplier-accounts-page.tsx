@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import { isModuleLive } from "@/config/feature-flags";
 import type { PurchaseOrderItem, SupplierItem, SupplierPaymentItem } from "@/features/suppliers/types/suppliers.types";
 import { listSuppliersMock } from "@/features/suppliers/services/suppliers.mock.service";
+import { listSuppliers } from "@/features/suppliers/services/suppliers.api.service";
+import {
+  getSupplierAccount,
+  type SupplierReturnLine,
+  type SupplierStatementLine,
+} from "@/features/suppliers/services/supplier-accounts.api.service";
 import {
   purchaseOrdersFixture,
   supplierPaymentsFixture,
@@ -57,10 +64,19 @@ export function SupplierAccountsPage() {
   const [search, setSearch] = useState("");
   const [suppliers, setSuppliers] = useState<SupplierItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [orders, setOrders] = useState<PurchaseOrderItem[]>([]);
+  const [payments, setPayments] = useState<SupplierPaymentItem[]>([]);
+  const [returns, setReturns] = useState<SupplierReturnLine[]>([]);
+  const [statement, setStatement] = useState<SupplierStatementLine[]>([]);
 
   useEffect(() => {
     let cancelled = false;
-    listSuppliersMock(search)
+    setLoading(true);
+    const loadSuppliers = isModuleLive("suppliers")
+      ? () => listSuppliers({ search, per_page: 100 })
+      : () => listSuppliersMock(search);
+
+    loadSuppliers()
       .then((response) => {
         if (cancelled) return;
         setSuppliers(response.data);
@@ -74,25 +90,46 @@ export function SupplierAccountsPage() {
     return () => { cancelled = true; };
   }, [search]);
 
+  useEffect(() => {
+    if (!selectedId) {
+      setOrders([]);
+      setPayments([]);
+      setReturns([]);
+      setStatement([]);
+      return;
+    }
+
+    if (!isModuleLive("suppliers")) {
+      const selected = suppliers.find((s) => s.id === selectedId) ?? null;
+      setOrders(selected ? purchaseOrdersFixture.filter((po) => po.supplier === selected.name) : []);
+      setPayments(selected ? supplierPaymentsFixture.filter((p) => p.supplier === selected.name) : []);
+      setReturns(supplierReturnsFixture);
+      setStatement(statementLinesFixture);
+      return;
+    }
+
+    let cancelled = false;
+    getSupplierAccount(selectedId)
+      .then((response) => {
+        if (cancelled) return;
+        setOrders(response.data.purchase_orders);
+        setPayments(response.data.payments);
+        setReturns(response.data.returns);
+        setStatement(response.data.statement);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setOrders([]);
+        setPayments([]);
+        setReturns([]);
+        setStatement([]);
+      });
+    return () => { cancelled = true; };
+  }, [selectedId, suppliers]);
+
   const selected = useMemo(
     () => suppliers.find((s) => s.id === selectedId) ?? null,
     [suppliers, selectedId]
-  );
-
-  const orders = useMemo(
-    () =>
-      selected
-        ? purchaseOrdersFixture.filter((po) => po.supplier === selected.name)
-        : [],
-    [selected]
-  );
-
-  const payments = useMemo(
-    () =>
-      selected
-        ? supplierPaymentsFixture.filter((p) => p.supplier === selected.name)
-        : [],
-    [selected]
   );
 
   return (
@@ -274,14 +311,22 @@ export function SupplierAccountsPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {supplierReturnsFixture.map((row) => (
-                          <TableRow key={row.id}>
-                            <TableCell className="text-center font-mono text-xs">{row.return_number}</TableCell>
-                            <TableCell className="text-center text-muted-foreground">{row.date}</TableCell>
-                            <TableCell className="text-center font-medium">{formatNumber(row.amount)}</TableCell>
-                            <TableCell className="text-center text-sm">{row.reason}</TableCell>
+                        {returns.length > 0 ? (
+                          returns.map((row) => (
+                            <TableRow key={row.id}>
+                              <TableCell className="text-center font-mono text-xs">{row.return_number}</TableCell>
+                              <TableCell className="text-center text-muted-foreground">{row.date}</TableCell>
+                              <TableCell className="text-center font-medium">{formatNumber(row.amount)}</TableCell>
+                              <TableCell className="text-center text-sm">{row.reason}</TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                              لا توجد مرتجعات.
+                            </TableCell>
                           </TableRow>
-                        ))}
+                        )}
                       </TableBody>
                     </Table>
                   </div>
@@ -300,15 +345,23 @@ export function SupplierAccountsPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {statementLinesFixture.map((row) => (
-                          <TableRow key={row.id}>
-                            <TableCell className="text-center text-muted-foreground">{row.date}</TableCell>
-                            <TableCell className="text-center text-sm">{row.description}</TableCell>
-                            <TableCell className="text-center">{row.debit ? formatNumber(row.debit) : "—"}</TableCell>
-                            <TableCell className="text-center">{row.credit ? formatNumber(row.credit) : "—"}</TableCell>
-                            <TableCell className="text-center font-bold">{formatNumber(row.balance)}</TableCell>
+                        {statement.length > 0 ? (
+                          statement.map((row) => (
+                            <TableRow key={row.id}>
+                              <TableCell className="text-center text-muted-foreground">{row.date}</TableCell>
+                              <TableCell className="text-center text-sm">{row.description}</TableCell>
+                              <TableCell className="text-center">{row.debit ? formatNumber(row.debit) : "—"}</TableCell>
+                              <TableCell className="text-center">{row.credit ? formatNumber(row.credit) : "—"}</TableCell>
+                              <TableCell className="text-center font-bold">{formatNumber(row.balance)}</TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                              لا توجد حركات في كشف الحساب.
+                            </TableCell>
                           </TableRow>
-                        ))}
+                        )}
                       </TableBody>
                     </Table>
                   </div>

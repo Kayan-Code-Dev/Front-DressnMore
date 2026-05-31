@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import { listTailoringDeliveriesMock } from "@/features/tailoring/services/tailoring.mock.service";
+import { listTailoringDeliveries } from "@/features/tailoring/services/tailoring.api.service";
 import type { TailoringDelivery } from "@/features/tailoring/types/tailoring.types";
 import {
   Card,
@@ -66,7 +68,11 @@ export function TailoringDeliveriesPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    listTailoringDeliveriesMock(search, page)
+    const loadDeliveries = isModuleLive("tailoring")
+      ? () => listTailoringDeliveries({ search, page, per_page: 15 })
+      : () => listTailoringDeliveriesMock(search, page);
+
+    loadDeliveries()
       .then((response) => {
         if (cancelled) return;
         setRows(response.data);

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
+import { getRentalOrder } from "@/features/orders/services/orders.api.service";
 import { getRentalOrderMock } from "@/features/orders/services/orders.mock.service";
 import type { RentalOrder, RentalOrderStatus } from "@/features/orders/types/orders.types";
 import {
@@ -61,7 +63,11 @@ export function OrderDetailsPage() {
       setLoading(false);
       return;
     }
-    getRentalOrderMock(orderId)
+    const loadOrder = isModuleLive("invoices")
+      ? () => getRentalOrder(orderId).then((data) => ({ data }))
+      : () => getRentalOrderMock(orderId);
+
+    loadOrder()
       .then((res) => setOrder(res.data))
       .finally(() => setLoading(false));
   }, [id]);

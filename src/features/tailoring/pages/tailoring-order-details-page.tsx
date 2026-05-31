@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
+import { getTailoringOrder } from "@/features/tailoring/services/tailoring.api.service";
 import { getTailoringOrderMock } from "@/features/tailoring/services/tailoring.mock.service";
 import type { TailoringOrder, TailoringOrderStatus } from "@/features/tailoring/types/tailoring.types";
 import {
@@ -54,7 +56,11 @@ export function TailoringOrderDetailsPage() {
       setLoading(false);
       return;
     }
-    getTailoringOrderMock(orderId)
+    const loadOrder = isModuleLive("tailoring")
+      ? () => getTailoringOrder(orderId).then((data) => ({ data }))
+      : () => getTailoringOrderMock(orderId);
+
+    loadOrder()
       .then((res) => setOrder(res.data))
       .finally(() => setLoading(false));
   }, [id]);

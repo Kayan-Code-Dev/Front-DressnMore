@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
+import {
+  getTailoringOrder,
+  updateMeasurements,
+} from "@/features/tailoring/services/tailoring.api.service";
 import {
   getTailoringOrderMock,
   updateMeasurementsMock,
@@ -34,7 +39,11 @@ export function EditMeasurementsPage() {
       setLoading(false);
       return;
     }
-    getTailoringOrderMock(orderId)
+    const loadOrder = isModuleLive("tailoring")
+      ? () => getTailoringOrder(orderId).then((data) => ({ data }))
+      : () => getTailoringOrderMock(orderId);
+
+    loadOrder()
       .then((res) => {
         if (res.data) {
           setClientName(res.data.client_name);
@@ -75,7 +84,12 @@ export function EditMeasurementsPage() {
     if (!Number.isFinite(orderId)) return;
     setSaving(true);
     try {
-      await updateMeasurementsMock(orderId, measurements.filter((m) => m.label.trim()));
+      const payload = measurements.filter((m) => m.label.trim());
+      if (isModuleLive("tailoring")) {
+        await updateMeasurements(orderId, payload);
+      } else {
+        await updateMeasurementsMock(orderId, payload);
+      }
       setSaved(true);
     } finally {
       setSaving(false);

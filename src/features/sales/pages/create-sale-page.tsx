@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
+import { createSale } from "@/features/sales/services/sales.api.service";
 import { createSaleMock } from "@/features/sales/services/sales.mock.service";
 import { saleProductOptions } from "@/features/sales/mocks/sales.mock";
 import type { SaleLineItem, SalePaymentMethod } from "@/features/sales/types/sales.types";
@@ -95,8 +97,25 @@ export function CreateSalePage() {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      const res = await createSaleMock();
-      setInvoiceId(res.data.id);
+      if (isModuleLive("sales")) {
+        const result = await createSale({
+          notes: notes || undefined,
+          discount: discountVal,
+          items: items.map((item) => ({
+            description: item.product_name,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+          })),
+          initial_payment: {
+            amount: total,
+            method: paymentMethod,
+          },
+        });
+        setInvoiceId(result.id);
+      } else {
+        const res = await createSaleMock();
+        setInvoiceId(res.data.id);
+      }
       setSubmitted(true);
     } finally {
       setSubmitting(false);

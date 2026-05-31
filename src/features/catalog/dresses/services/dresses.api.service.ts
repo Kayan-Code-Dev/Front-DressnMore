@@ -35,3 +35,11 @@ export async function getDress(id: number): Promise<ApiSuccess<DressItem>> {
   const response = await httpClient.get<DressItem>(tenantPath(`/dresses/${id}`));
   return httpClient.unwrap(response);
 }
+
+export async function transferDress(
+  id: number,
+  payload: { to_branch_id: number; notes?: string },
+): Promise<ApiSuccess<DressItem>> {
+  const response = await httpClient.post<DressItem>(tenantPath(`/dresses/${id}/transfer`), payload);
+  return httpClient.unwrap(response);
+}

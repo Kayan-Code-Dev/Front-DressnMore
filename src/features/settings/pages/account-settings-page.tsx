@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { AccountProfile } from "@/features/settings/types/settings.types";
 import { getAccountSettingsMock } from "@/features/settings/services/settings.mock.service";
-import { getAccountProfile } from "@/features/settings/services/settings.api.service";
+import { getAccountProfile, updateAccountProfile } from "@/features/settings/services/settings.api.service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Settings, User, Lock, Trash2 } from "lucide-react";
@@ -14,6 +14,8 @@ export function AccountSettingsPage() {
   const [profile, setProfile] = useState<AccountProfile | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const load = isModuleLive("settings") ? getAccountProfile : getAccountSettingsMock;
@@ -23,6 +25,26 @@ export function AccountSettingsPage() {
       setEmail(response.data.email);
     });
   }, []);
+
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+    setSaving(true);
+    setSaveMessage(null);
+    try {
+      if (isModuleLive("settings")) {
+        const response = await updateAccountProfile({ name, email });
+        setProfile(response.data);
+        setSaveMessage("تم حفظ الملف الشخصي.");
+      } else {
+        setProfile({ ...profile, name, email });
+        setSaveMessage("تم حفظ الملف الشخصي (وضع تجريبي).");
+      }
+    } catch (err: unknown) {
+      setSaveMessage(err instanceof Error ? err.message : "تعذر حفظ الملف الشخصي.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="w-full space-y-6">
@@ -75,7 +97,10 @@ export function AccountSettingsPage() {
                   <Input id="settings-logo" type="file" disabled className="text-sm" />
                   <p className="text-xs text-muted-foreground">رفع الشعار غير متاح حالياً.</p>
                 </div>
-                <Button disabled={!profile}>حفظ الملف الشخصي</Button>
+                <Button type="button" disabled={!profile || saving} onClick={handleSaveProfile}>
+                  {saving ? "جاري الحفظ..." : "حفظ الملف الشخصي"}
+                </Button>
+                {saveMessage ? <p className="text-sm text-muted-foreground">{saveMessage}</p> : null}
               </form>
             )}
           </CardContent>

@@ -21,6 +21,8 @@ export type DressItem = {
   notes?: string | null;
   category?: DressCategoryRef | null;
   subcategory?: DressCategoryRef | null;
+  branch?: DressCategoryRef | null;
+  branch_id?: number | null;
 };
 
 export type DressFilterParams = {

@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import {
   getTailoringStatsMock,
   listTailoringOrdersMock,
 } from "@/features/tailoring/services/tailoring.mock.service";
+import {
+  getTailoringStats,
+  listTailoringOrders,
+} from "@/features/tailoring/services/tailoring.api.service";
 import type { TailoringOrder, TailoringOrderStats, TailoringOrderStatus } from "@/features/tailoring/types/tailoring.types";
 import {
   Card,
@@ -117,15 +122,20 @@ export function TailoringOrdersPage() {
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    getTailoringStatsMock()
-      .then((res) => setStats(res.data))
+    const loadStats = isModuleLive("tailoring") ? getTailoringStats : getTailoringStatsMock;
+    loadStats()
+      .then((res) => setStats("data" in res ? res.data : res))
       .finally(() => setStatsLoading(false));
   }, []);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    listTailoringOrdersMock(search, page)
+    const loadOrders = isModuleLive("tailoring")
+      ? () => listTailoringOrders({ search, page, per_page: 15 })
+      : () => listTailoringOrdersMock(search, page);
+
+    loadOrders()
       .then((response) => {
         if (cancelled) return;
         setRows(response.data);

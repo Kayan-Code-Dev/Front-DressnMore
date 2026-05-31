@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import ReactECharts from "echarts-for-react";
+import { isModuleLive } from "@/config/feature-flags";
 import {
   getDailySalesMock,
   getEmployeeSalesMock,
   getProductSalesMock,
   getSalesReportSummaryMock,
 } from "@/features/sales/services/sales.mock.service";
+import {
+  getDailySales,
+  getEmployeeSales,
+  getProductSales,
+  getSalesReportSummary,
+} from "@/features/sales/services/sales.api.service";
 import type {
   DailySalesRow,
   EmployeeSalesRow,
@@ -70,17 +77,18 @@ export function SalesReportsFullPage() {
 
   useEffect(() => {
     setLoading(true);
+    const live = isModuleLive("sales");
     Promise.all([
-      getSalesReportSummaryMock(),
-      getDailySalesMock(),
-      getProductSalesMock(),
-      getEmployeeSalesMock(),
+      live ? getSalesReportSummary() : getSalesReportSummaryMock().then((r) => r.data),
+      live ? getDailySales() : getDailySalesMock().then((r) => r.data),
+      live ? getProductSales() : getProductSalesMock().then((r) => r.data),
+      live ? getEmployeeSales() : getEmployeeSalesMock().then((r) => r.data),
     ])
       .then(([summaryRes, dailyRes, productsRes, employeesRes]) => {
-        setSummary(summaryRes.data);
-        setDaily(dailyRes.data);
-        setProducts(productsRes.data);
-        setEmployees(employeesRes.data);
+        setSummary(summaryRes as SalesReportSummary);
+        setDaily(dailyRes as DailySalesRow[]);
+        setProducts(productsRes as ProductSalesRow[]);
+        setEmployees(employeesRes as EmployeeSalesRow[]);
       })
       .finally(() => setLoading(false));
   }, []);
