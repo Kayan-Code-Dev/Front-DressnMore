@@ -2,8 +2,8 @@ export type SupplierItem = {
   id: number;
   code: string;
   name: string;
-  phone: string;
-  address: string;
+  phone: string | null;
+  address: string | null;
   current_balance: number;
   status: "active" | "inactive";
 };
@@ -12,6 +12,18 @@ export type SupplierFilterParams = {
   status?: string;
   type?: string;
   city_id?: number;
+};
+
+export type SupplierPayload = {
+  code?: string | null;
+  name: string;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  tax_number?: string | null;
+  opening_balance?: number | null;
+  notes?: string | null;
+  status?: "active" | "inactive";
 };
 
 export type PurchaseOrderItem = {

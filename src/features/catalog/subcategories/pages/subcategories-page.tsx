@@ -1,9 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import { isModuleLive } from "@/config/feature-flags";
 import type { SubcategoryItem } from "@/features/catalog/subcategories/types/subcategories.types";
+import type { CategoryItem } from "@/features/catalog/categories/types/categories.types";
 import { listSubcategoriesMock } from "@/features/catalog/subcategories/services/subcategories.mock.service";
-import { listDressCategories } from "@/features/catalog/categories/services/categories.api.service";
+import {
+  createDressCategory,
+  deleteDressCategory,
+  listDressCategories,
+  updateDressCategory,
+} from "@/features/catalog/categories/services/categories.api.service";
 import {
   Card,
   CardHeader,
@@ -32,6 +39,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Layers,
   Search,
@@ -85,25 +100,18 @@ export function SubcategoriesPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
   const [dialog, setDialog] = useState<null | "create" | "edit" | "delete">(null);
+  const [selected, setSelected] = useState<SubcategoryItem | null>(null);
+  const [parents, setParents] = useState<CategoryItem[]>([]);
+  const [form, setForm] = useState({ parent_id: "", name: "", description: "", status: "active" as "active" | "inactive" });
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const handleSearchChange = (value: string) => {
+  const loadRows = useCallback(() => {
     setLoading(true);
-    setSearch(value);
-    setPage(1);
-  };
-
-  const handlePageChange = (nextPage: number) => {
-    setLoading(true);
-    setPage(nextPage);
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-
     fetchSubcategoryData(search, page)
       .then((response) => {
-        if (cancelled) return;
         setRows(response.data as SubcategoryItem[]);
         const meta = response.meta as { last_page?: number; total?: number } | null | undefined;
         setTotalPages(meta?.last_page ?? 1);
@@ -111,16 +119,87 @@ export function SubcategoriesPage() {
         setError(null);
       })
       .catch((err: unknown) => {
-        if (cancelled) return;
         setError(err instanceof Error ? err.message : "Failed to load subcategories");
         setRows([]);
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => { cancelled = true; };
+      .finally(() => setLoading(false));
   }, [search, page]);
+
+  useEffect(() => {
+    loadRows();
+  }, [loadRows, reloadKey]);
+
+  useEffect(() => {
+    if (!isModuleLive("subcategories")) return;
+    listDressCategories({ only_parents: true, per_page: 100 })
+      .then((res) => setParents(res.data))
+      .catch(() => setParents([]));
+  }, []);
+
+  const openCreate = () => {
+    setSelected(null);
+    setForm({ parent_id: "", name: "", description: "", status: "active" });
+    setFormError(null);
+    setDialog("create");
+  };
+
+  const openEdit = (row: SubcategoryItem) => {
+    setSelected(row);
+    setForm({
+      parent_id: row.parent_id ? String(row.parent_id) : "",
+      name: row.name,
+      description: row.description ?? "",
+      status: row.status,
+    });
+    setFormError(null);
+    setDialog("edit");
+  };
+
+  const closeDialog = () => {
+    if (saving) return;
+    setDialog(null);
+    setSelected(null);
+    setFormError(null);
+  };
+
+  const toPayload = () => ({
+    parent_id: form.parent_id ? Number(form.parent_id) : null,
+    name: form.name.trim(),
+    description: form.description.trim() || null,
+    status: form.status,
+  });
+
+  const handleSave = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!isModuleLive("subcategories")) return;
+    setSaving(true);
+    setFormError(null);
+    try {
+      if (dialog === "create") await createDressCategory(toPayload());
+      else if (dialog === "edit" && selected) await updateDressCategory(selected.id, toPayload());
+      closeDialog();
+      setReloadKey((k) => k + 1);
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!isModuleLive("subcategories") || !selected) return;
+    setSaving(true);
+    setFormError(null);
+    try {
+      await deleteDressCategory(selected.id);
+      closeDialog();
+      setReloadKey((k) => k + 1);
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : "Failed to delete");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const columns = useMemo(
     () => [
@@ -157,7 +236,7 @@ export function SubcategoriesPage() {
               <Filter className="h-4 w-4 ml-1.5" />
               الفلاتر
             </Button>
-            <Button onClick={() => setDialog("create")}>
+            <Button disabled={!isModuleLive("subcategories")} onClick={openCreate}>
               <Plus className="h-4 w-4 ml-1.5" />
               إنشاء قسم فرعي
             </Button>
@@ -170,7 +249,7 @@ export function SubcategoriesPage() {
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
                 value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder="بحث عن قسم فرعي..."
                 className="pr-9"
               />
@@ -208,7 +287,7 @@ export function SubcategoriesPage() {
                         <TableCell className="text-center text-muted-foreground">{row.id}</TableCell>
                         <TableCell className="text-center font-medium">{row.name}</TableCell>
                         <TableCell className="text-center">
-                          <Badge variant="outline">{row.category_name || "—"}</Badge>
+                          <Badge variant="outline">{row.parent?.name ?? row.category_name ?? "—"}</Badge>
                         </TableCell>
                         <TableCell className="text-center text-muted-foreground">{row.description || "—"}</TableCell>
                         <TableCell className="text-center">
@@ -216,20 +295,10 @@ export function SubcategoriesPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2 justify-center">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="تعديل"
-                              onClick={() => setDialog("edit")}
-                            >
+                            <Button variant="ghost" size="icon" title="تعديل" disabled={!isModuleLive("subcategories")} onClick={() => openEdit(row)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="destructive"
-                              size="icon"
-                              title="حذف"
-                              onClick={() => setDialog("delete")}
-                            >
+                            <Button variant="destructive" size="icon" title="حذف" disabled={!isModuleLive("subcategories")} onClick={() => { setSelected(row); setFormError(null); setDialog("delete"); }}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -259,7 +328,7 @@ export function SubcategoriesPage() {
                 variant="outline"
                 size="sm"
                 disabled={page <= 1}
-                onClick={() => handlePageChange(page - 1)}
+                onClick={() => setPage((p) => p - 1)}
               >
                 <ChevronRight className="h-4 w-4" />
                 السابق
@@ -271,7 +340,7 @@ export function SubcategoriesPage() {
                 variant="outline"
                 size="sm"
                 disabled={page >= totalPages}
-                onClick={() => handlePageChange(page + 1)}
+                onClick={() => setPage((p) => p + 1)}
               >
                 التالي
                 <ChevronLeft className="h-4 w-4" />
@@ -281,25 +350,61 @@ export function SubcategoriesPage() {
         </CardFooter>
       </Card>
 
-      <Dialog open={dialog !== null} onOpenChange={() => setDialog(null)}>
+      <Dialog open={dialog === "create" || dialog === "edit"} onOpenChange={(open) => !open && closeDialog()}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <form onSubmit={handleSave}>
+            <DialogHeader>
+              <DialogTitle>{dialog === "edit" ? "تعديل القسم الفرعي" : "إنشاء قسم فرعي"}</DialogTitle>
+              <DialogDescription>أدخل بيانات القسم الفرعي.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-3 py-2">
+              <div className="space-y-2">
+                <Label>القسم الرئيسي</Label>
+                <Select value={form.parent_id} onValueChange={(v) => setForm((p) => ({ ...p, parent_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="اختر القسم" /></SelectTrigger>
+                  <SelectContent>
+                    {parents.map((p) => (<SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>الاسم</Label>
+                <Input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required />
+              </div>
+              <div className="space-y-2">
+                <Label>الوصف</Label>
+                <Input value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>الحالة</Label>
+                <Select value={form.status} onValueChange={(v) => setForm((p) => ({ ...p, status: v as "active" | "inactive" }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">نشط</SelectItem>
+                    <SelectItem value="inactive">غير نشط</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {formError ? <p className="text-sm text-destructive">{formError}</p> : null}
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" disabled={saving} onClick={closeDialog}>إلغاء</Button>
+              <Button type="submit" disabled={saving}>{saving ? "جاري الحفظ..." : "حفظ"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialog === "delete"} onOpenChange={(open) => !open && closeDialog()}>
         <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>
-            <DialogTitle>
-              {dialog === "create" ? "إنشاء قسم فرعي" : dialog === "edit" ? "تعديل القسم الفرعي" : "حذف القسم الفرعي"}
-            </DialogTitle>
-            <DialogDescription>
-              {dialog === "create"
-                ? "أدخل بيانات القسم الفرعي الجديد."
-                : dialog === "edit"
-                  ? "عدّل بيانات القسم الفرعي المحدد."
-                  : "هل أنت متأكد أنك تريد حذف هذا القسم الفرعي؟"}
-            </DialogDescription>
+            <DialogTitle>حذف القسم الفرعي</DialogTitle>
+            <DialogDescription>هل أنت متأكد من حذف &quot;{selected?.name}&quot;؟</DialogDescription>
           </DialogHeader>
-          <div className="py-4 text-sm text-muted-foreground">
-            سيتم تفعيل هذه الميزة قريباً.
-          </div>
+          {formError ? <p className="text-sm text-destructive">{formError}</p> : null}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialog(null)}>إغلاق</Button>
+            <Button variant="outline" disabled={saving} onClick={closeDialog}>إلغاء</Button>
+            <Button variant="destructive" disabled={saving} onClick={handleDelete}>{saving ? "جاري الحذف..." : "حذف"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

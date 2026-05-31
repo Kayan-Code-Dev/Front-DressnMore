@@ -9,7 +9,8 @@ export const branchesFixture: BranchItem[] = [
     address: "Nasr City, Cairo",
     inventory_name: "Main Inventory",
     currency: "EGP",
-    vat: "14%",
+    vat_enabled: true,
+    vat_value: 14,
     status: "active",
   },
   {
@@ -20,7 +21,8 @@ export const branchesFixture: BranchItem[] = [
     address: "Smouha, Alexandria",
     inventory_name: "Alex Inventory",
     currency: "EGP",
-    vat: "14%",
+    vat_enabled: true,
+    vat_value: 14,
     status: "active",
   },
   {
@@ -31,7 +33,8 @@ export const branchesFixture: BranchItem[] = [
     address: "Downtown, Mansoura",
     inventory_name: "Mansoura Inventory",
     currency: "EGP",
-    vat: "14%",
+    vat_enabled: true,
+    vat_value: 14,
     status: "inactive",
   },
 ];

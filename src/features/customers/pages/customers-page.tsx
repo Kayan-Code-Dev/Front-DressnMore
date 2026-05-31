@@ -1,8 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import { isModuleLive } from "@/config/feature-flags";
 import { listCustomersMock } from "@/features/customers/services/customers.mock.service";
-import { listCustomers } from "@/features/customers/services/customers.api.service";
+import {
+  createCustomer,
+  deleteCustomer,
+  listCustomers,
+  updateCustomer,
+} from "@/features/customers/services/customers.api.service";
 import type { CustomerItem } from "@/features/customers/types/customers.types";
 import {
   Card,
@@ -24,6 +30,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +46,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import {
   Users,
   Search,
@@ -51,9 +64,29 @@ function fetchCustomerData(searchTerm: string, currentPage: number) {
   return listCustomersMock(searchTerm);
 }
 
-const statusMap: Record<string, { label: string; variant: "success" | "warning" | "destructive" }> = {
+type CustomerForm = {
+  name: string;
+  phone: string;
+  email: string;
+  status: "active" | "inactive";
+};
+
+const emptyForm = (): CustomerForm => ({
+  name: "",
+  phone: "",
+  email: "",
+  status: "active",
+});
+
+function formatCreatedAt(value: string | null | undefined): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" });
+}
+
+const statusMap: Record<string, { label: string; variant: "success" | "destructive" }> = {
   active: { label: "نشط", variant: "success" },
-  vip: { label: "VIP", variant: "info" as "success" },
   inactive: { label: "غير نشط", variant: "destructive" },
 };
 
@@ -86,27 +119,18 @@ export function CustomersPage() {
   const [rows, setRows] = useState<CustomerItem[]>([]);
   const [dialog, setDialog] = useState<null | "create" | "edit" | "delete">(null);
   const [selected, setSelected] = useState<CustomerItem | null>(null);
+  const [form, setForm] = useState<CustomerForm>(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  const handleSearchChange = (value: string) => {
+  const loadRows = useCallback(() => {
     setLoading(true);
-    setSearch(value);
-    setPage(1);
-  };
-
-  const handlePageChange = (nextPage: number) => {
-    setLoading(true);
-    setPage(nextPage);
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-
     fetchCustomerData(search, page)
       .then((response) => {
-        if (cancelled) return;
         setRows(response.data);
         const meta = response.meta as { last_page?: number; total?: number } | null | undefined;
         setTotalPages(meta?.last_page ?? 1);
@@ -114,28 +138,152 @@ export function CustomersPage() {
         setError(null);
       })
       .catch((err: unknown) => {
-        if (cancelled) return;
         setError(err instanceof Error ? err.message : "Failed to load customers");
         setRows([]);
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => { cancelled = true; };
+      .finally(() => setLoading(false));
   }, [search, page]);
+
+  useEffect(() => {
+    loadRows();
+  }, [loadRows, reloadKey]);
+
+  const openCreate = () => {
+    setSelected(null);
+    setForm(emptyForm());
+    setFormError(null);
+    setDialog("create");
+  };
+
+  const openEdit = (row: CustomerItem) => {
+    setSelected(row);
+    setForm({
+      name: row.name,
+      phone: row.phone ?? "",
+      email: row.email ?? "",
+      status: row.status,
+    });
+    setFormError(null);
+    setDialog("edit");
+  };
+
+  const openDelete = (row: CustomerItem) => {
+    setSelected(row);
+    setFormError(null);
+    setDialog("delete");
+  };
+
+  const closeDialog = () => {
+    if (saving) return;
+    setDialog(null);
+    setSelected(null);
+    setFormError(null);
+  };
+
+  const toPayload = () => ({
+    name: form.name.trim(),
+    phone: form.phone.trim() || null,
+    email: form.email.trim() || null,
+    status: form.status,
+  });
+
+  const handleSave = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!isModuleLive("customers")) return;
+
+    setSaving(true);
+    setFormError(null);
+    try {
+      if (dialog === "create") {
+        await createCustomer(toPayload());
+      } else if (dialog === "edit" && selected) {
+        await updateCustomer(selected.id, toPayload());
+      }
+      closeDialog();
+      setReloadKey((k) => k + 1);
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : "Failed to save customer");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!isModuleLive("customers") || !selected) return;
+
+    setSaving(true);
+    setFormError(null);
+    try {
+      await deleteCustomer(selected.id);
+      closeDialog();
+      setReloadKey((k) => k + 1);
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : "Failed to delete customer");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const columns = useMemo(
     () => [
       { key: "id", title: "#" },
       { key: "name", title: "الاسم" },
       { key: "phone", title: "الهاتف" },
-      { key: "city", title: "المدينة" },
+      { key: "email", title: "البريد الإلكتروني" },
       { key: "status", title: "الحالة" },
-      { key: "joined_at", title: "تاريخ الانضمام" },
+      { key: "created_at", title: "تاريخ الإنشاء" },
       { key: "actions", title: "إجراءات" },
     ],
-    []
+    [],
+  );
+
+  const formFields = (
+    <div className="grid gap-3 py-2">
+      <div className="space-y-2">
+        <Label>الاسم</Label>
+        <Input
+          value={form.name}
+          onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+          placeholder="اسم العميل"
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>الهاتف</Label>
+        <Input
+          value={form.phone}
+          onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+          placeholder="+2010..."
+          dir="ltr"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>البريد الإلكتروني</Label>
+        <Input
+          value={form.email}
+          onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+          placeholder="email@example.com"
+          dir="ltr"
+          type="email"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>الحالة</Label>
+        <Select
+          value={form.status}
+          onValueChange={(v) => setForm((p) => ({ ...p, status: v as "active" | "inactive" }))}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">نشط</SelectItem>
+            <SelectItem value="inactive">غير نشط</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {formError ? <p className="text-sm text-destructive">{formError}</p> : null}
+    </div>
   );
 
   return (
@@ -161,7 +309,7 @@ export function CustomersPage() {
               <Filter className="h-4 w-4 ml-1.5" />
               الفلاتر
             </Button>
-            <Button onClick={() => setDialog("create")}>
+            <Button disabled={!isModuleLive("customers")} onClick={openCreate}>
               <Plus className="h-4 w-4 ml-1.5" />
               إنشاء عميل جديد
             </Button>
@@ -174,7 +322,10 @@ export function CustomersPage() {
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
                 value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 placeholder="بحث عن عميل..."
                 className="pr-9"
               />
@@ -211,13 +362,17 @@ export function CustomersPage() {
                       <TableRow key={row.id}>
                         <TableCell className="text-center text-muted-foreground">{row.id}</TableCell>
                         <TableCell className="text-center font-medium">{row.name}</TableCell>
-                        <TableCell className="text-center" dir="ltr">{row.phone || "—"}</TableCell>
-                        <TableCell className="text-center">{row.city || "—"}</TableCell>
+                        <TableCell className="text-center" dir="ltr">
+                          {row.phone || "—"}
+                        </TableCell>
+                        <TableCell className="text-center text-muted-foreground" dir="ltr">
+                          {row.email || "—"}
+                        </TableCell>
                         <TableCell className="text-center">
                           <StatusBadge status={row.status} />
                         </TableCell>
                         <TableCell className="text-center text-muted-foreground text-xs">
-                          {row.joined_at || "—"}
+                          {formatCreatedAt(row.created_at)}
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-1">
@@ -225,17 +380,19 @@ export function CustomersPage() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => { setSelected(row); setDialog("edit"); }}
+                              disabled={!isModuleLive("customers")}
+                              onClick={() => openEdit(row)}
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-destructive"
-                              onClick={() => { setSelected(row); setDialog("delete"); }}
+                              className="h-8 w-8"
+                              disabled={!isModuleLive("customers")}
+                              onClick={() => openDelete(row)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
                             </Button>
                           </div>
                         </TableCell>
@@ -260,24 +417,14 @@ export function CustomersPage() {
           </p>
           {totalPages > 1 && (
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => handlePageChange(page - 1)}
-              >
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
                 <ChevronRight className="h-4 w-4" />
                 السابق
               </Button>
               <span className="text-sm text-muted-foreground px-2">
                 {page} / {totalPages}
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => handlePageChange(page + 1)}
-              >
+              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
                 التالي
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -286,44 +433,44 @@ export function CustomersPage() {
         </CardFooter>
       </Card>
 
-      <Dialog open={dialog === "create" || dialog === "edit"} onOpenChange={() => setDialog(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{dialog === "edit" ? "تعديل عميل" : "إنشاء عميل جديد"}</DialogTitle>
-            <DialogDescription>أدخل بيانات العميل الأساسية.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3 py-2">
-            <div className="space-y-2">
-              <Label>الاسم</Label>
-              <Input defaultValue={selected?.name ?? ""} placeholder="اسم العميل" />
-            </div>
-            <div className="space-y-2">
-              <Label>الهاتف</Label>
-              <Input defaultValue={selected?.phone ?? ""} placeholder="+2010..." dir="ltr" />
-            </div>
-            <div className="space-y-2">
-              <Label>المدينة</Label>
-              <Input defaultValue={selected?.city ?? ""} placeholder="المدينة" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialog(null)}>إلغاء</Button>
-            <Button onClick={() => setDialog(null)}>{dialog === "edit" ? "حفظ" : "إنشاء"}</Button>
-          </DialogFooter>
+      <Dialog open={dialog === "create" || dialog === "edit"} onOpenChange={(open) => !open && closeDialog()}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <form onSubmit={handleSave}>
+            <DialogHeader>
+              <DialogTitle>{dialog === "edit" ? "تعديل عميل" : "إنشاء عميل جديد"}</DialogTitle>
+              <DialogDescription>
+                {dialog === "edit" ? `تعديل: ${selected?.name ?? ""}` : "أدخل بيانات العميل الأساسية."}
+              </DialogDescription>
+            </DialogHeader>
+            {formFields}
+            <DialogFooter>
+              <Button type="button" variant="outline" disabled={saving} onClick={closeDialog}>
+                إلغاء
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "جاري الحفظ..." : dialog === "edit" ? "حفظ" : "إنشاء"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={dialog === "delete"} onOpenChange={() => setDialog(null)}>
-        <DialogContent className="sm:max-w-sm">
+      <Dialog open={dialog === "delete"} onOpenChange={(open) => !open && closeDialog()}>
+        <DialogContent className="sm:max-w-sm" dir="rtl">
           <DialogHeader>
             <DialogTitle>حذف العميل</DialogTitle>
             <DialogDescription>
-              هل أنت متأكد من حذف {selected?.name}؟ لا يمكن التراجع عن هذا الإجراء.
+              هل أنت متأكد من حذف العميل &quot;{selected?.name}&quot;؟ لا يمكن التراجع عن هذا الإجراء.
             </DialogDescription>
           </DialogHeader>
+          {formError ? <p className="text-sm text-destructive">{formError}</p> : null}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialog(null)}>إلغاء</Button>
-            <Button variant="destructive" onClick={() => setDialog(null)}>حذف</Button>
+            <Button variant="outline" disabled={saving} onClick={closeDialog}>
+              إلغاء
+            </Button>
+            <Button variant="destructive" disabled={saving} onClick={handleDelete}>
+              {saving ? "جاري الحذف..." : "حذف"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
