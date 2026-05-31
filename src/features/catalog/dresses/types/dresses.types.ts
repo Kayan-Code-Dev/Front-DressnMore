@@ -14,6 +14,11 @@ export type DressItem = {
   status: DressStatus;
   description: string | null;
   display_name?: string;
+  color?: string | null;
+  size?: string | null;
+  rental_price?: number | null;
+  purchase_price?: number | null;
+  notes?: string | null;
   category?: DressCategoryRef | null;
   subcategory?: DressCategoryRef | null;
 };

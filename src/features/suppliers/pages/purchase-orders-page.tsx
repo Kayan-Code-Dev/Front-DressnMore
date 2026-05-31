@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 
 import type { PurchaseOrderItem } from "@/features/suppliers/types/suppliers.types";
 import { listPurchaseOrdersMock } from "@/features/suppliers/services/suppliers.mock.service";
+import { listPurchaseOrders } from "@/features/suppliers/services/purchase-orders.api.service";
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,8 +15,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ClipboardList, Search, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatNumber } from "@/shared/lib/format/numbers";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function fetchPurchaseOrderData(searchTerm: string, _currentPage: number) {
+function fetchPurchaseOrderData(searchTerm: string, currentPage: number) {
+  if (isModuleLive("purchaseOrders")) {
+    return listPurchaseOrders({ search: searchTerm, page: currentPage, per_page: 15 });
+  }
   return listPurchaseOrdersMock(searchTerm);
 }
 

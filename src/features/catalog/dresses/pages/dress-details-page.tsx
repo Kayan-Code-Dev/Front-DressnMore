@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
 import type { DressItem } from "@/features/catalog/dresses/types/dresses.types";
 import { getDressMock } from "@/features/catalog/dresses/services/dresses.mock.service";
+import { getDress } from "@/features/catalog/dresses/services/dresses.api.service";
 import {
   Card,
   CardHeader,
@@ -24,13 +26,6 @@ const statusMap: Record<string, { label: string; variant: "success" | "warning" 
   unavailable: { label: "غير متاح", variant: "destructive" },
 };
 
-const dressDetailExtras: Record<number, { color: string; size: string; rental_price: number; purchase_price: number; notes: string }> = {
-  1: { color: "أسود", size: "M", rental_price: 2500, purchase_price: 18000, notes: "فستان سهرة كلاسيكي" },
-  2: { color: "أزرق ملكي", size: "L", rental_price: 3200, purchase_price: 22000, notes: "محجوز لحفل زفاف 2026-06-10" },
-  3: { color: "أبيض لؤلؤي", size: "S", rental_price: 4000, purchase_price: 28000, notes: "قيد الصيانة — تعديلات خياطة" },
-  4: { color: "أخضر زمردي", size: "M", rental_price: 2100, purchase_price: 15000, notes: "متاح للإيجار الفوري" },
-};
-
 function DetailField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl p-3 bg-muted/30 border" style={{ borderColor: "var(--color-border)" }}>
@@ -49,7 +44,8 @@ export function DressDetailsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    getDressMock(dressId)
+    const load = isModuleLive("dresses") ? getDress : getDressMock;
+    load(dressId)
       .then((response) => {
         if (cancelled) return;
         setDress(response.data);
@@ -65,21 +61,20 @@ export function DressDetailsPage() {
     return () => { cancelled = true; };
   }, [dressId]);
 
-  const extras = dress ? dressDetailExtras[dress.id] : null;
   const statusConfig = dress ? statusMap[dress.status] : null;
 
   return (
     <div className="w-full space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/catalog/dresses">
+          <Link to="/dresses">
             <ArrowRight className="h-4 w-4 ml-1" />
             العودة للفساتين
           </Link>
         </Button>
         {dress && (
           <Button variant="outline" size="sm" asChild>
-            <Link to={`/catalog/dresses/${dress.id}/transfer`}>
+            <Link to={`/dresses/${dress.id}/transfer`}>
               <ArrowLeftRight className="h-4 w-4 ml-1" />
               تحويل بين الفروع
             </Link>
@@ -141,18 +136,20 @@ export function DressDetailsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   <DetailField label="القسم">{dress.category?.name ?? "—"}</DetailField>
                   <DetailField label="القسم الفرعي">{dress.subcategory?.name ?? "—"}</DetailField>
-                  <DetailField label="الوصف">{dress.description ?? extras?.notes ?? "—"}</DetailField>
+                  <DetailField label="اللون">{dress.color ?? "—"}</DetailField>
+                  <DetailField label="المقاس">{dress.size ?? "—"}</DetailField>
+                  <DetailField label="الوصف">{dress.description ?? dress.notes ?? "—"}</DetailField>
                   <DetailField label="سعر الإيجار">
-                    {extras ? `${formatNumber(extras.rental_price)} ج.م` : "—"}
+                    {dress.rental_price != null ? `${formatNumber(dress.rental_price)} ج.م` : "—"}
                   </DetailField>
                   <DetailField label="سعر الشراء">
-                    {extras ? `${formatNumber(extras.purchase_price)} ج.م` : "—"}
+                    {dress.purchase_price != null ? `${formatNumber(dress.purchase_price)} ج.م` : "—"}
                   </DetailField>
                 </div>
-                {extras?.notes && (
+                {dress.notes && (
                   <div className="rounded-xl p-4 border bg-muted/20" style={{ borderColor: "var(--color-border)" }}>
                     <p className="text-xs text-muted-foreground mb-1">ملاحظات</p>
-                    <p className="text-sm">{extras.notes}</p>
+                    <p className="text-sm">{dress.notes}</p>
                   </div>
                 )}
               </div>

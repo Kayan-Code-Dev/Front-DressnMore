@@ -30,3 +30,8 @@ export async function deleteDress(id: number): Promise<ApiSuccess<null>> {
   const response = await httpClient.delete<null>(tenantPath(`/dresses/${id}`));
   return httpClient.unwrap(response);
 }
+
+export async function getDress(id: number): Promise<ApiSuccess<DressItem>> {
+  const response = await httpClient.get<DressItem>(tenantPath(`/dresses/${id}`));
+  return httpClient.unwrap(response);
+}

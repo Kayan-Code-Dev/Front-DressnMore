@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import { searchDeliveriesMock } from "@/features/orders/services/orders.mock.service";
+import { searchDeliveries } from "@/features/orders/services/orders.api.service";
 import type { DeliverySearchRow } from "@/features/orders/types/orders.types";
 import {
   Card,
@@ -79,7 +81,12 @@ export function DeliverySearchPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    searchDeliveriesMock(search, page)
+
+    const request = isModuleLive("deliveries")
+      ? searchDeliveries({ search, page, per_page: 15 })
+      : searchDeliveriesMock(search, page);
+
+    request
       .then((response) => {
         if (cancelled) return;
         setRows(response.data);

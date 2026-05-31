@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import type { DeliveryItem } from "@/features/delivery/types/deliveries.types";
 import { listDeliveriesMock } from "@/features/delivery/services/deliveries.mock.service";
+import { listDeliveries } from "@/features/delivery/services/deliveries.api.service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -28,6 +30,13 @@ export function DeliveriesPage() {
   const handleSearchChange = (value: string) => { setLoading(true); setSearch(value); };
 
   useEffect(() => {
+    if (isModuleLive("deliveries")) {
+      listDeliveries({ search })
+        .then((response) => setRows(response.data))
+        .finally(() => setLoading(false));
+      return;
+    }
+
     listDeliveriesMock(search)
       .then((response) => setRows(response.data))
       .finally(() => setLoading(false));

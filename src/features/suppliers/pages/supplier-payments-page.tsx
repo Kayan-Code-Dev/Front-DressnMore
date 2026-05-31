@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { isModuleLive } from "@/config/feature-flags";
 import type { SupplierPaymentItem } from "@/features/suppliers/types/suppliers.types";
 import { listSupplierPaymentsMock } from "@/features/suppliers/services/suppliers.mock.service";
+import { listSupplierPayments } from "@/features/suppliers/services/supplier-payments.api.service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -27,6 +29,13 @@ export function SupplierPaymentsPage() {
   const handleSearchChange = (value: string) => { setLoading(true); setSearch(value); };
 
   useEffect(() => {
+    if (isModuleLive("supplierPayments")) {
+      listSupplierPayments({ search })
+        .then((response) => setRows(response.data))
+        .finally(() => setLoading(false));
+      return;
+    }
+
     listSupplierPaymentsMock(search)
       .then((response) => setRows(response.data))
       .finally(() => setLoading(false));

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
 import type { CashboxItem, CashboxTransaction } from "@/features/cashboxes/types/cashboxes.types";
 import { getCashboxMock, listCashboxTransactionsMock } from "@/features/cashboxes/services/cashboxes.mock.service";
+import { getCashbox, listCashboxTransactions } from "@/features/cashboxes/services/cashboxes.api.service";
 import {
   Card,
   CardHeader,
@@ -58,7 +60,12 @@ export function CashboxDetailsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([getCashboxMock(cashboxId), listCashboxTransactionsMock(cashboxId)])
+    const loadCashbox = isModuleLive("cashboxes") ? getCashbox : getCashboxMock;
+    const loadTransactions = isModuleLive("cashboxes")
+      ? (id: number) => listCashboxTransactions(id, { per_page: 8 })
+      : listCashboxTransactionsMock;
+
+    Promise.all([loadCashbox(cashboxId), loadTransactions(cashboxId)])
       .then(([cashboxRes, txRes]) => {
         if (cancelled) return;
         setCashbox(cashboxRes.data);

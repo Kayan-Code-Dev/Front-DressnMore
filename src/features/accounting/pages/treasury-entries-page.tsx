@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import type { TreasuryEntry } from "@/features/accounting/types/accounting.types";
 import { listTreasuryEntriesMock } from "@/features/accounting/services/accounting.mock.service";
+import { listTreasuryEntries } from "@/features/accounting/services/accounting.api.service";
 import {
   Card,
   CardHeader,
@@ -60,6 +62,18 @@ export function TreasuryEntriesPage() {
 
   useEffect(() => {
     let cancelled = false;
+    if (isModuleLive("accounting")) {
+      listTreasuryEntries({ search })
+        .then((response) => {
+          if (cancelled) return;
+          setRows(response.data);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+      return () => { cancelled = true; };
+    }
+
     listTreasuryEntriesMock(search)
       .then((response) => {
         if (cancelled) return;

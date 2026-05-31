@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import type { OverdueReturnItem } from "@/features/returns/types/returns.types";
 import { listOverdueReturnsMock } from "@/features/returns/services/returns.mock.service";
+import { listOverdueReturns } from "@/features/returns/services/returns.api.service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -30,6 +32,13 @@ export function OverdueReturnsPage() {
   const handleSearchChange = (value: string) => { setLoading(true); setSearch(value); };
 
   useEffect(() => {
+    if (isModuleLive("returns")) {
+      listOverdueReturns({ search })
+        .then((response) => setRows(response.data))
+        .finally(() => setLoading(false));
+      return;
+    }
+
     listOverdueReturnsMock(search)
       .then((response) => setRows(response.data))
       .finally(() => setLoading(false));

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import type { CashboxTransaction } from "@/features/cashboxes/types/cashboxes.types";
 import { getCashboxMock, listCashboxTransactionsMock } from "@/features/cashboxes/services/cashboxes.mock.service";
+import { getCashbox, listCashboxTransactions } from "@/features/cashboxes/services/cashboxes.api.service";
 import {
   Card,
   CardHeader,
@@ -58,14 +60,19 @@ export function CashboxTransactionsPage() {
   };
 
   useEffect(() => {
-    getCashboxMock(cashboxId).then((res) => {
+    const loadCashbox = isModuleLive("cashboxes") ? getCashbox : getCashboxMock;
+    loadCashbox(cashboxId).then((res) => {
       if (res.data) setCashboxName(res.data.name);
     });
   }, [cashboxId]);
 
   useEffect(() => {
     let cancelled = false;
-    listCashboxTransactionsMock(cashboxId || undefined, search)
+    const loadTransactions = isModuleLive("cashboxes")
+      ? listCashboxTransactions(cashboxId, { search, per_page: 100 })
+      : listCashboxTransactionsMock(cashboxId || undefined, search);
+
+    loadTransactions
       .then((response) => {
         if (cancelled) return;
         setRows(response.data);

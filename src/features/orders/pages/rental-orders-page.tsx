@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import {
   getRentalOrderStatsMock,
   listRentalOrdersMock,
 } from "@/features/orders/services/orders.mock.service";
+import {
+  getRentalOrderStats,
+  listRentalOrders,
+} from "@/features/orders/services/orders.api.service";
 import type { RentalOrder, RentalOrderStats, RentalOrderStatus } from "@/features/orders/types/orders.types";
 import {
   Card,
@@ -123,14 +128,19 @@ export function RentalOrdersPage() {
   };
 
   useEffect(() => {
-    getRentalOrderStatsMock()
-      .then((res) => setStats(res.data))
+    const loadStats = isModuleLive("invoices") ? getRentalOrderStats : getRentalOrderStatsMock;
+    loadStats()
+      .then((res) => setStats("data" in res ? res.data : res))
       .finally(() => setStatsLoading(false));
   }, []);
 
   useEffect(() => {
     let cancelled = false;
-    listRentalOrdersMock(search, page)
+    const loadOrders = isModuleLive("invoices")
+      ? () => listRentalOrders({ search, page, per_page: 15 })
+      : () => listRentalOrdersMock(search, page);
+
+    loadOrders()
       .then((response) => {
         if (cancelled) return;
         setRows(response.data);
