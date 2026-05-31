@@ -53,6 +53,7 @@ import {
   XCircle,
   Banknote,
 } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 const PAYMENT_METHODS = [
   { value: "cash", label: "نقدي" },
@@ -435,7 +436,7 @@ export function ExpensesPage() {
                         <TableCell className="text-center text-muted-foreground">{cashboxName(row.cashbox_id)}</TableCell>
                         <TableCell className="text-center">{row.category?.name ?? "—"}</TableCell>
                         <TableCell className="text-center text-muted-foreground">{row.vendor || "—"}</TableCell>
-                        <TableCell className="text-center font-medium">{row.amount.toLocaleString()}</TableCell>
+                        <TableCell className="text-center font-medium">{formatNumber(row.amount)}</TableCell>
                         <TableCell className="text-center text-muted-foreground">{row.expense_date}</TableCell>
                         <TableCell className="text-center"><StatusBadge status={row.status} /></TableCell>
                         <TableCell className="text-center">
@@ -509,7 +510,7 @@ export function ExpensesPage() {
         <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>
             <DialogTitle>دفع المصروف</DialogTitle>
-            <DialogDescription>تأكيد دفع المصروف #{selected?.id} بمبلغ {selected?.amount.toLocaleString()}</DialogDescription>
+            <DialogDescription>تأكيد دفع المصروف #{selected?.id} بمبلغ {formatNumber(selected?.amount ?? 0)}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
             <Label>الصندوق</Label>

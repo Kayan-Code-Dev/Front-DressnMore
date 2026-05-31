@@ -33,6 +33,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Truck, Search, Plus, Filter, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 function fetchSupplierData(searchTerm: string, currentPage: number) {
   if (isModuleLive("suppliers")) {
@@ -274,7 +275,7 @@ export function SuppliersPage() {
                         <TableCell className="text-center font-medium">{row.name}</TableCell>
                         <TableCell className="text-center text-muted-foreground" dir="ltr">{row.phone || "—"}</TableCell>
                         <TableCell className="text-center text-muted-foreground text-xs max-w-[150px] truncate">{row.address || "—"}</TableCell>
-                        <TableCell className="text-center font-medium">{(row.current_balance ?? 0).toLocaleString()}</TableCell>
+                        <TableCell className="text-center font-medium">{formatNumber((row.current_balance ?? 0))}</TableCell>
                         <TableCell className="text-center"><Badge variant={row.status === "active" ? "success" : "destructive"}>{row.status === "active" ? "نشط" : "غير نشط"}</Badge></TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-1">

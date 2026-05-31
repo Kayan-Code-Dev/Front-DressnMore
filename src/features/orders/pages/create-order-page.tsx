@@ -127,7 +127,7 @@ export function CreateOrderPage() {
                     <TableCell className="text-center font-medium">{item.name}</TableCell>
                     <TableCell className="text-center"><Badge variant="outline" className="font-mono">{item.code}</Badge></TableCell>
                     <TableCell className="text-center">{item.size}</TableCell>
-                    <TableCell className="text-center">{item.rental_price.toLocaleString("ar-EG")} ج.م</TableCell>
+                    <TableCell className="text-center">{item.rental_price} ج.م</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -146,11 +146,11 @@ export function CreateOrderPage() {
           </div>
 
           <div className="rounded-lg bg-muted/30 p-4 max-w-sm mr-auto space-y-2">
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">المجموع الفرعي</span><span>{subtotal.toLocaleString("ar-EG")} ج.م</span></div>
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">الخصم</span><span>- {discountVal.toLocaleString("ar-EG")} ج.م</span></div>
-            <div className="flex justify-between font-black text-lg border-t pt-2"><span>الإجمالي</span><span>{total.toLocaleString("ar-EG")} ج.م</span></div>
-            <div className="flex justify-between text-sm text-green-700"><span>العربون</span><span>{depositVal.toLocaleString("ar-EG")} ج.م</span></div>
-            <div className="flex justify-between text-sm text-amber-700"><span>المتبقي</span><span>{remaining.toLocaleString("ar-EG")} ج.م</span></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">المجموع الفرعي</span><span>{subtotal} ج.م</span></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">الخصم</span><span>- {discountVal} ج.م</span></div>
+            <div className="flex justify-between font-black text-lg border-t pt-2"><span>الإجمالي</span><span>{total} ج.م</span></div>
+            <div className="flex justify-between text-sm text-green-700"><span>العربون</span><span>{depositVal} ج.م</span></div>
+            <div className="flex justify-between text-sm text-amber-700"><span>المتبقي</span><span>{remaining} ج.م</span></div>
           </div>
         </CardContent>
         <CardFooter className="flex items-center justify-between">

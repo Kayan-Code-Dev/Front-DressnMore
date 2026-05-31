@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User, ArrowRight, Pencil, Shield } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 const statusMap: Record<string, { label: string; variant: "success" | "destructive" | "outline" }> = {
   active: { label: "نشط", variant: "success" },
@@ -119,7 +120,7 @@ export function EmployeeDetailPage() {
                   <DetailField label="تاريخ التوظيف">{employee.hire_date}</DetailField>
                   <DetailField label="المسمى الوظيفي">{employee.job_title}</DetailField>
                   <DetailField label="الفرع">{employee.branch_name}</DetailField>
-                  <DetailField label="الراتب الأساسي">{employee.base_salary.toLocaleString()} ج.م</DetailField>
+                  <DetailField label="الراتب الأساسي">{formatNumber(employee.base_salary)} ج.م</DetailField>
                 </div>
               </div>
 
@@ -129,9 +130,9 @@ export function EmployeeDetailPage() {
                   البدلات والصلاحيات
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <DetailField label="بدل سكن">{(employee.housing_allowance ?? 0).toLocaleString()} ج.م</DetailField>
-                  <DetailField label="بدل مواصلات">{(employee.transport_allowance ?? 0).toLocaleString()} ج.م</DetailField>
-                  <DetailField label="بدلات أخرى">{(employee.other_allowances ?? 0).toLocaleString()} ج.م</DetailField>
+                  <DetailField label="بدل سكن">{formatNumber((employee.housing_allowance ?? 0))} ج.م</DetailField>
+                  <DetailField label="بدل مواصلات">{formatNumber((employee.transport_allowance ?? 0))} ج.م</DetailField>
+                  <DetailField label="بدلات أخرى">{formatNumber((employee.other_allowances ?? 0))} ج.م</DetailField>
                   <DetailField label="الصلاحيات">
                     <div className="flex flex-wrap gap-1 mt-1">
                       {(employee.roles ?? []).map((role) => (

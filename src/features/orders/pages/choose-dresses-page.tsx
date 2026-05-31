@@ -95,7 +95,7 @@ export function ChooseDressesPage() {
                 </CardDescription>
               </div>
             </div>
-            <Badge variant="info">{selected.length} صنف محدد — {totalPrice.toLocaleString("ar-EG")} ج.م</Badge>
+            <Badge variant="info">{selected.length} صنف محدد — {totalPrice} ج.م</Badge>
           </div>
         </CardHeader>
         <CardContent>
@@ -154,7 +154,7 @@ export function ChooseDressesPage() {
                       <TableCell className="text-center"><Badge variant="outline" className="font-mono">{dress.code}</Badge></TableCell>
                       <TableCell className="text-center text-muted-foreground">{dress.category}</TableCell>
                       <TableCell className="text-center">{dress.size}</TableCell>
-                      <TableCell className="text-center">{dress.rental_price.toLocaleString("ar-EG")} ج.م</TableCell>
+                      <TableCell className="text-center">{dress.rental_price} ج.م</TableCell>
                       <TableCell className="text-center">
                         <Badge variant={dress.available ? "success" : "destructive"}>
                           {dress.available ? "متاح" : "غير متاح"}

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Scissors, Filter } from "lucide-react";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 export function TailoringReportsPage() {
   const [summary, setSummary] = useState<TailoringReportSummary | null>(null);
@@ -60,7 +61,7 @@ export function TailoringReportsPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground mb-1">إجمالي الإيرادات</p>
-            {summary ? <p className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>{summary.total_revenue.toLocaleString()}</p> : <Skeleton className="h-8 w-28" />}
+            {summary ? <p className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>{formatNumber(summary.total_revenue)}</p> : <Skeleton className="h-8 w-28" />}
           </CardContent>
         </Card>
       </div>
@@ -82,7 +83,7 @@ export function TailoringReportsPage() {
                     <TableRow><TableCell className="text-center">الطلبات الجاهزة</TableCell><TableCell className="text-center font-medium">{summary.ready_orders}</TableCell></TableRow>
                     <TableRow><TableCell className="text-center">الطلبات المتأخرة</TableCell><TableCell className="text-center font-medium">{summary.late_orders}</TableCell></TableRow>
                     <TableRow><TableCell className="text-center">قيد التنفيذ</TableCell><TableCell className="text-center font-medium">{summary.in_progress_orders}</TableCell></TableRow>
-                    <TableRow><TableCell className="text-center">إجمالي الإيرادات</TableCell><TableCell className="text-center font-medium">{summary.total_revenue.toLocaleString()}</TableCell></TableRow>
+                    <TableRow><TableCell className="text-center">إجمالي الإيرادات</TableCell><TableCell className="text-center font-medium">{formatNumber(summary.total_revenue)}</TableCell></TableRow>
                   </>
                 ) : (
                   Array.from({ length: 5 }).map((_, i) => (

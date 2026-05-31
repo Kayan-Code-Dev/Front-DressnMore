@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calculator, Search, Filter } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 function TableSkeletonRows({ rows = 5, cols = 7 }: { rows?: number; cols?: number }) {
   return (<>{Array.from({ length: rows }).map((_, i) => (<TableRow key={i}>{Array.from({ length: cols }).map((__, j) => (<TableCell key={j} className="text-center"><Skeleton className="h-5 w-full max-w-[100px] mx-auto" /></TableCell>))}</TableRow>))}</>);
@@ -63,19 +64,19 @@ export function AccountingSummaryPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground mb-1">إجمالي الدخل</p>
-            {summary ? <p className="text-2xl font-bold text-emerald-600">{summary.total_income.toLocaleString()}</p> : <Skeleton className="h-8 w-28" />}
+            {summary ? <p className="text-2xl font-bold text-emerald-600">{formatNumber(summary.total_income)}</p> : <Skeleton className="h-8 w-28" />}
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground mb-1">إجمالي المصروفات</p>
-            {summary ? <p className="text-2xl font-bold text-red-600">{summary.total_expenses.toLocaleString()}</p> : <Skeleton className="h-8 w-28" />}
+            {summary ? <p className="text-2xl font-bold text-red-600">{formatNumber(summary.total_expenses)}</p> : <Skeleton className="h-8 w-28" />}
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground mb-1">صافي التغيير</p>
-            {summary ? <p className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>{summary.net_change.toLocaleString()}</p> : <Skeleton className="h-8 w-28" />}
+            {summary ? <p className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>{formatNumber(summary.net_change)}</p> : <Skeleton className="h-8 w-28" />}
           </CardContent>
         </Card>
       </div>
@@ -90,7 +91,7 @@ export function AccountingSummaryPage() {
               {summary.cashbox_balances.map((cb) => (
                 <div key={cb.name} className="flex items-center gap-2 rounded-lg border px-3 py-2" style={{ borderColor: "var(--color-border)" }}>
                   <span className="text-sm text-muted-foreground">{cb.name}:</span>
-                  <span className="font-bold">{cb.balance.toLocaleString()}</span>
+                  <span className="font-bold">{formatNumber(cb.balance)}</span>
                 </div>
               ))}
             </div>
@@ -124,9 +125,9 @@ export function AccountingSummaryPage() {
                       <TableCell className="text-center"><Badge variant={row.type === "debit" ? "destructive" : "success"}>{row.type === "debit" ? "مدين" : "دائن"}</Badge></TableCell>
                       <TableCell className="text-center text-muted-foreground text-xs">{row.reference}</TableCell>
                       <TableCell className="text-center text-xs max-w-[200px] truncate">{row.description}</TableCell>
-                      <TableCell className="text-center font-medium">{row.debit.toLocaleString()}</TableCell>
-                      <TableCell className="text-center font-medium">{row.credit.toLocaleString()}</TableCell>
-                      <TableCell className="text-center font-bold">{row.balance.toLocaleString()}</TableCell>
+                      <TableCell className="text-center font-medium">{formatNumber(row.debit)}</TableCell>
+                      <TableCell className="text-center font-medium">{formatNumber(row.credit)}</TableCell>
+                      <TableCell className="text-center font-bold">{formatNumber(row.balance)}</TableCell>
                     </TableRow>
                   ))
                 ) : (

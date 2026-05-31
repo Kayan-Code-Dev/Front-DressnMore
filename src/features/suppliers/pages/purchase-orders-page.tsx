@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClipboardList, Search, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function fetchPurchaseOrderData(searchTerm: string, _currentPage: number) {
@@ -111,9 +112,9 @@ export function PurchaseOrdersPage() {
                         <TableCell className="text-center text-muted-foreground">{row.id}</TableCell>
                         <TableCell className="text-center"><Badge variant="outline" className="font-mono">{row.purchase_order_number}</Badge></TableCell>
                         <TableCell className="text-center font-medium">{row.supplier}</TableCell>
-                        <TableCell className="text-center font-medium">{row.total.toLocaleString()}</TableCell>
-                        <TableCell className="text-center text-muted-foreground">{row.paid_amount.toLocaleString()}</TableCell>
-                        <TableCell className="text-center font-medium">{row.remaining_amount.toLocaleString()}</TableCell>
+                        <TableCell className="text-center font-medium">{formatNumber(row.total)}</TableCell>
+                        <TableCell className="text-center text-muted-foreground">{formatNumber(row.paid_amount)}</TableCell>
+                        <TableCell className="text-center font-medium">{formatNumber(row.remaining_amount)}</TableCell>
                         <TableCell className="text-center"><StatusBadge status={row.status} /></TableCell>
                         <TableCell className="text-center text-muted-foreground">{row.order_date}</TableCell>
                       </TableRow>

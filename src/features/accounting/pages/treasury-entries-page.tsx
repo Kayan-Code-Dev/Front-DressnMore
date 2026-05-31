@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookOpen, Search, Filter } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 const statusMap: Record<string, { label: string; variant: "success" | "outline" | "destructive" }> = {
   posted: { label: "مرحّل", variant: "success" },
@@ -142,13 +143,13 @@ export function TreasuryEntriesPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground mb-1">إجمالي مدين</p>
-            <p className="text-2xl font-bold">{stats.totalDebit.toLocaleString()}</p>
+            <p className="text-2xl font-bold">{formatNumber(stats.totalDebit)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground mb-1">إجمالي دائن</p>
-            <p className="text-2xl font-bold">{stats.totalCredit.toLocaleString()}</p>
+            <p className="text-2xl font-bold">{formatNumber(stats.totalCredit)}</p>
           </CardContent>
         </Card>
       </div>
@@ -196,10 +197,10 @@ export function TreasuryEntriesPage() {
                         <TableCell className="text-center text-sm">{row.account}</TableCell>
                         <TableCell className="text-center text-xs max-w-[160px] truncate">{row.description}</TableCell>
                         <TableCell className="text-center font-medium">
-                          {row.debit ? row.debit.toLocaleString() : "—"}
+                          {row.debit ? formatNumber(row.debit) : "—"}
                         </TableCell>
                         <TableCell className="text-center font-medium">
-                          {row.credit ? row.credit.toLocaleString() : "—"}
+                          {row.credit ? formatNumber(row.credit) : "—"}
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge variant={st.variant}>{st.label}</Badge>

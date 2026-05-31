@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Banknote, Search, Filter, Wallet, CheckCircle, Clock } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 function TableSkeletonRows({ rows = 5, cols = 8 }: { rows?: number; cols?: number }) {
   return (
@@ -124,7 +125,7 @@ export function EmployeeSalariesPage() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">إجمالي الصافي</p>
-            <p className="text-lg font-black">{stats.total_net.toLocaleString()}</p>
+            <p className="text-lg font-black">{formatNumber(stats.total_net)}</p>
           </div>
         </div>
       </div>
@@ -189,10 +190,10 @@ export function EmployeeSalariesPage() {
                         <TableCell className="text-center font-medium">{row.employee_name}</TableCell>
                         <TableCell className="text-center text-muted-foreground">{row.branch_name}</TableCell>
                         <TableCell className="text-center">{row.period}</TableCell>
-                        <TableCell className="text-center">{row.base_salary.toLocaleString()}</TableCell>
-                        <TableCell className="text-center text-emerald-600">+{row.allowances.toLocaleString()}</TableCell>
-                        <TableCell className="text-center text-red-500">-{row.deductions.toLocaleString()}</TableCell>
-                        <TableCell className="text-center font-bold">{row.net_salary.toLocaleString()}</TableCell>
+                        <TableCell className="text-center">{formatNumber(row.base_salary)}</TableCell>
+                        <TableCell className="text-center text-emerald-600">+{formatNumber(row.allowances)}</TableCell>
+                        <TableCell className="text-center text-red-500">-{formatNumber(row.deductions)}</TableCell>
+                        <TableCell className="text-center font-bold">{formatNumber(row.net_salary)}</TableCell>
                         <TableCell className="text-center">
                           <Badge variant={row.status === "paid" ? "success" : "outline"}>
                             {row.status === "paid" ? "تم الصرف" : "لم يُصرف"}

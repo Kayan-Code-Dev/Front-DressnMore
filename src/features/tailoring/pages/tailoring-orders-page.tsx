@@ -164,7 +164,7 @@ export function TailoringOrdersPage() {
             <StatCard label="إجمالي الأوامر" value={stats.total} sub={`${stats.active} نشطة`} icon={Scissors} gradient="linear-gradient(135deg, #BE185D, #F472B6)" />
             <StatCard label="أوامر نشطة" value={stats.active} sub="قيد التنفيذ" icon={Clock} gradient="linear-gradient(135deg, #059669, #34D399)" />
             <StatCard label="متأخر" value={stats.overdue} sub="تحتاج متابعة" icon={AlertTriangle} gradient="linear-gradient(135deg, #DC2626, #F87171)" />
-            <StatCard label="جاهز للتسليم" value={stats.ready} sub={`${stats.revenue.toLocaleString("ar-EG")} ج.م إيرادات`} icon={CheckCircle} gradient="linear-gradient(135deg, #7C3AED, #A78BFA)" />
+            <StatCard label="جاهز للتسليم" value={stats.ready} sub={`${stats.revenue} ج.م إيرادات`} icon={CheckCircle} gradient="linear-gradient(135deg, #7C3AED, #A78BFA)" />
           </>
         ) : null}
       </div>
@@ -220,7 +220,7 @@ export function TailoringOrdersPage() {
                         <TableCell className="text-center text-muted-foreground text-xs">{row.due_date}</TableCell>
                         <TableCell className="text-center text-sm">{stageLabels[row.current_stage] ?? row.current_stage}</TableCell>
                         <TableCell className="text-center"><Badge variant={priorityCfg.variant}>{priorityCfg.label}</Badge></TableCell>
-                        <TableCell className="text-center font-medium">{row.total_price.toLocaleString("ar-EG")} ج.م</TableCell>
+                        <TableCell className="text-center font-medium">{row.total_price} ج.م</TableCell>
                         <TableCell className="text-center"><Badge variant={statusCfg.variant}>{statusCfg.label}</Badge></TableCell>
                         <TableCell className="text-center">
                           <Button variant="ghost" size="icon" asChild title="عرض">

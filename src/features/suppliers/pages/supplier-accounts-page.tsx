@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Truck, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 const poStatusMap: Record<string, { label: string; variant: "success" | "warning" | "outline" | "destructive" }> = {
   open: { label: "مفتوح", variant: "warning" },
@@ -145,7 +146,7 @@ export function SupplierAccountsPage() {
                   >
                     <p className="font-semibold text-sm">{supplier.name}</p>
                     <p className="text-xs text-muted-foreground font-mono">{supplier.code}</p>
-                    <p className="text-xs font-bold mt-1">{supplier.current_balance.toLocaleString()} ج.م</p>
+                    <p className="text-xs font-bold mt-1">{formatNumber(supplier.current_balance)} ج.م</p>
                   </button>
                 ))
               ) : (
@@ -161,7 +162,7 @@ export function SupplierAccountsPage() {
               <div>
                 <CardTitle className="text-base font-black">{selected.name}</CardTitle>
                 <CardDescription>
-                  الرصيد الحالي: <span className="font-bold">{selected.current_balance.toLocaleString()} ج.م</span>
+                  الرصيد الحالي: <span className="font-bold">{formatNumber(selected.current_balance)} ج.م</span>
                 </CardDescription>
               </div>
             ) : (
@@ -207,9 +208,9 @@ export function SupplierAccountsPage() {
                               <TableRow key={row.id}>
                                 <TableCell className="text-center font-mono text-xs">{row.purchase_order_number}</TableCell>
                                 <TableCell className="text-center text-muted-foreground">{row.order_date}</TableCell>
-                                <TableCell className="text-center">{row.total.toLocaleString()}</TableCell>
-                                <TableCell className="text-center">{row.paid_amount.toLocaleString()}</TableCell>
-                                <TableCell className="text-center font-medium">{row.remaining_amount.toLocaleString()}</TableCell>
+                                <TableCell className="text-center">{formatNumber(row.total)}</TableCell>
+                                <TableCell className="text-center">{formatNumber(row.paid_amount)}</TableCell>
+                                <TableCell className="text-center font-medium">{formatNumber(row.remaining_amount)}</TableCell>
                                 <TableCell className="text-center"><Badge variant={st.variant}>{st.label}</Badge></TableCell>
                               </TableRow>
                             );
@@ -244,7 +245,7 @@ export function SupplierAccountsPage() {
                             <TableRow key={row.id}>
                               <TableCell className="text-center font-mono text-xs">{row.reference}</TableCell>
                               <TableCell className="text-center text-muted-foreground">{row.purchase_order_number}</TableCell>
-                              <TableCell className="text-center font-medium">{row.amount.toLocaleString()}</TableCell>
+                              <TableCell className="text-center font-medium">{formatNumber(row.amount)}</TableCell>
                               <TableCell className="text-center">{methodLabels[row.method] ?? row.method}</TableCell>
                               <TableCell className="text-center text-muted-foreground">{row.paid_at}</TableCell>
                             </TableRow>
@@ -277,7 +278,7 @@ export function SupplierAccountsPage() {
                           <TableRow key={row.id}>
                             <TableCell className="text-center font-mono text-xs">{row.return_number}</TableCell>
                             <TableCell className="text-center text-muted-foreground">{row.date}</TableCell>
-                            <TableCell className="text-center font-medium">{row.amount.toLocaleString()}</TableCell>
+                            <TableCell className="text-center font-medium">{formatNumber(row.amount)}</TableCell>
                             <TableCell className="text-center text-sm">{row.reason}</TableCell>
                           </TableRow>
                         ))}
@@ -303,9 +304,9 @@ export function SupplierAccountsPage() {
                           <TableRow key={row.id}>
                             <TableCell className="text-center text-muted-foreground">{row.date}</TableCell>
                             <TableCell className="text-center text-sm">{row.description}</TableCell>
-                            <TableCell className="text-center">{row.debit ? row.debit.toLocaleString() : "—"}</TableCell>
-                            <TableCell className="text-center">{row.credit ? row.credit.toLocaleString() : "—"}</TableCell>
-                            <TableCell className="text-center font-bold">{row.balance.toLocaleString()}</TableCell>
+                            <TableCell className="text-center">{row.debit ? formatNumber(row.debit) : "—"}</TableCell>
+                            <TableCell className="text-center">{row.credit ? formatNumber(row.credit) : "—"}</TableCell>
+                            <TableCell className="text-center font-bold">{formatNumber(row.balance)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

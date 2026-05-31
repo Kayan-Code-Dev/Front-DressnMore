@@ -176,7 +176,7 @@ export function RentalOrdersPage() {
             <StatCard label="إجمالي الفواتير" value={stats.total} sub={`${stats.active} نشطة`} icon={FileText} gradient="linear-gradient(135deg, #475569, #64748B)" />
             <StatCard label="فواتير نشطة" value={stats.active} sub="قيد التأجير" icon={ShoppingBag} gradient="linear-gradient(135deg, #059669, #34D399)" />
             <StatCard label="متأخرات الإرجاع" value={stats.overdue} sub="تحتاج متابعة" icon={AlertTriangle} gradient="linear-gradient(135deg, #DC2626, #F87171)" />
-            <StatCard label="إجمالي الإيرادات" value={`${stats.revenue.toLocaleString("ar-EG")} ج.م`} sub={`محصّل: ${stats.collected.toLocaleString("ar-EG")} ج.م`} icon={Banknote} gradient="linear-gradient(135deg, #D97706, #FBBF24)" />
+            <StatCard label="إجمالي الإيرادات" value={`${stats.revenue} ج.م`} sub={`محصّل: ${stats.collected} ج.م`} icon={Banknote} gradient="linear-gradient(135deg, #D97706, #FBBF24)" />
           </>
         ) : null}
       </div>
@@ -260,7 +260,7 @@ export function RentalOrdersPage() {
                           <TableCell className="text-center text-muted-foreground">{row.employee_name}</TableCell>
                           <TableCell className="text-center text-muted-foreground text-xs">{row.delivery_date}</TableCell>
                           <TableCell className="text-center text-muted-foreground text-xs">{row.return_date}</TableCell>
-                          <TableCell className="text-center font-medium">{row.total_price.toLocaleString("ar-EG")} ج.م</TableCell>
+                          <TableCell className="text-center font-medium">{row.total_price} ج.م</TableCell>
                           <TableCell className="text-center">
                             <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
                           </TableCell>

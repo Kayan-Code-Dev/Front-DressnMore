@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, Filter } from "lucide-react";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 export function SalesReportsPage() {
   const [summary, setSummary] = useState<SalesReportSummary | null>(null);
@@ -42,7 +43,7 @@ export function SalesReportsPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground mb-1">إجمالي المبيعات</p>
-            {summary ? <p className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>{summary.total_sales.toLocaleString()}</p> : <Skeleton className="h-8 w-32" />}
+            {summary ? <p className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>{formatNumber(summary.total_sales)}</p> : <Skeleton className="h-8 w-32" />}
           </CardContent>
         </Card>
         <Card>
@@ -54,7 +55,7 @@ export function SalesReportsPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground mb-1">متوسط قيمة الفاتورة</p>
-            {summary ? <p className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>{summary.average_invoice_value.toLocaleString()}</p> : <Skeleton className="h-8 w-28" />}
+            {summary ? <p className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>{formatNumber(summary.average_invoice_value)}</p> : <Skeleton className="h-8 w-28" />}
           </CardContent>
         </Card>
       </div>
@@ -72,9 +73,9 @@ export function SalesReportsPage() {
               <TableBody>
                 {summary ? (
                   <>
-                    <TableRow><TableCell className="text-center">إجمالي المبيعات</TableCell><TableCell className="text-center font-medium">{summary.total_sales.toLocaleString()}</TableCell></TableRow>
+                    <TableRow><TableCell className="text-center">إجمالي المبيعات</TableCell><TableCell className="text-center font-medium">{formatNumber(summary.total_sales)}</TableCell></TableRow>
                     <TableRow><TableCell className="text-center">عدد الفواتير</TableCell><TableCell className="text-center font-medium">{summary.invoices_count}</TableCell></TableRow>
-                    <TableRow><TableCell className="text-center">متوسط قيمة الفاتورة</TableCell><TableCell className="text-center font-medium">{summary.average_invoice_value.toLocaleString()}</TableCell></TableRow>
+                    <TableRow><TableCell className="text-center">متوسط قيمة الفاتورة</TableCell><TableCell className="text-center font-medium">{formatNumber(summary.average_invoice_value)}</TableCell></TableRow>
                   </>
                 ) : (
                   Array.from({ length: 3 }).map((_, i) => (

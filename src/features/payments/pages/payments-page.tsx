@@ -27,6 +27,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { CreditCard, Search, Filter, ChevronLeft, ChevronRight, CheckCircle, XCircle } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 function fetchPaymentData(searchTerm: string, currentPage: number) {
   if (isModuleLive("payments")) {
@@ -196,7 +197,7 @@ export function PaymentsPage() {
                       <TableRow key={row.id}>
                         <TableCell className="text-center text-muted-foreground">{row.id}</TableCell>
                         <TableCell className="text-center"><Badge variant="outline" className="font-mono">#{row.invoice_id}</Badge></TableCell>
-                        <TableCell className="text-center font-medium">{row.amount.toLocaleString()}</TableCell>
+                        <TableCell className="text-center font-medium">{formatNumber(row.amount)}</TableCell>
                         <TableCell className="text-center"><Badge variant="secondary">{typeMap[row.payment_type] ?? row.payment_type}</Badge></TableCell>
                         <TableCell className="text-center"><StatusBadge status={row.status} /></TableCell>
                         <TableCell className="text-center text-muted-foreground">{formatDate(row.paid_at)}</TableCell>
@@ -237,7 +238,7 @@ export function PaymentsPage() {
         <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>
             <DialogTitle>تأكيد الدفع</DialogTitle>
-            <DialogDescription>تأكيد دفع #{selected?.id} بمبلغ {selected?.amount.toLocaleString()}؟</DialogDescription>
+            <DialogDescription>تأكيد دفع #{selected?.id} بمبلغ {formatNumber(selected?.amount ?? 0)}؟</DialogDescription>
           </DialogHeader>
           {formError ? <p className="text-sm text-destructive">{formError}</p> : null}
           <DialogFooter>

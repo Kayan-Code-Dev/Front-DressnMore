@@ -17,6 +17,7 @@ import {
   upgradeSubscription,
 } from "@/features/subscriptions/services/subscription.api.service";
 import { Check, Crown, RefreshCw, Sparkles } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 function fetchOverview() {
   return isModuleLive("subscription") ? getSubscriptionOverview() : getSubscriptionOverviewMock();
@@ -65,7 +66,7 @@ function PlanCard({
       <CardContent className="space-y-4">
         <div>
           <p className="text-3xl font-black" style={{ color: "var(--color-text-primary)" }}>
-            {plan.price === 0 ? "مجاناً" : `${plan.price.toLocaleString()} ${plan.currency}`}
+            {plan.price === 0 ? "مجاناً" : `${formatNumber(plan.price)} ${plan.currency}`}
           </p>
           {plan.billing_period_days && (
             <p className="text-xs text-muted-foreground">/ {plan.billing_period_days} يوم</p>

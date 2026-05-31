@@ -150,7 +150,7 @@ export function SalesReportsFullPage() {
     [employees],
   );
 
-  const formatMoney = (n: number) => `${n.toLocaleString("ar-EG")} ج.م`;
+  const formatMoney = (n: number) => `${n} ج.م`;
 
   return (
     <div className="w-full space-y-4" dir="rtl">

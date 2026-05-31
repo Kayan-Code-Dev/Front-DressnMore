@@ -33,6 +33,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ArrowLeftRight, Search, Plus, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 function fetchCashMovementData(searchTerm: string, currentPage: number) {
   if (isModuleLive("cashMovements")) {
@@ -232,8 +233,8 @@ export function CashMovementsPage() {
                         <TableCell className="text-center text-muted-foreground">{cashboxName(row.cashbox_id)}</TableCell>
                         <TableCell className="text-center"><Badge variant={typeMap[row.type]?.variant ?? "secondary"}>{typeMap[row.type]?.label ?? row.type}</Badge></TableCell>
                         <TableCell className="text-center">{directionMap[row.direction] ?? row.direction}</TableCell>
-                        <TableCell className="text-center font-medium">{row.amount.toLocaleString()}</TableCell>
-                        <TableCell className="text-center font-medium">{row.balance_after.toLocaleString()}</TableCell>
+                        <TableCell className="text-center font-medium">{formatNumber(row.amount)}</TableCell>
+                        <TableCell className="text-center font-medium">{formatNumber(row.balance_after)}</TableCell>
                         <TableCell className="text-center text-muted-foreground text-xs">{row.reference || "—"}</TableCell>
                         <TableCell className="text-center text-muted-foreground">{formatDate(row.created_at)}</TableCell>
                       </TableRow>

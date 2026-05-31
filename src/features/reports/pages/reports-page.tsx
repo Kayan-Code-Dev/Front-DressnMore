@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart3, TrendingUp, Scissors, ArrowLeft } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 export function ReportsPage() {
   const [data, setData] = useState<ReportsOverview | null>(null);
@@ -44,7 +45,7 @@ export function ReportsPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">إجمالي المبيعات</span>
-                {data ? <span className="font-bold text-lg">{data.total_sales.toLocaleString()}</span> : <Skeleton className="h-6 w-24" />}
+                {data ? <span className="font-bold text-lg">{formatNumber(data.total_sales)}</span> : <Skeleton className="h-6 w-24" />}
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">عدد الفواتير</span>
@@ -72,7 +73,7 @@ export function ReportsPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">إجمالي الإيرادات</span>
-                {data ? <span className="font-bold text-lg">{data.total_revenue.toLocaleString()}</span> : <Skeleton className="h-6 w-24" />}
+                {data ? <span className="font-bold text-lg">{formatNumber(data.total_revenue)}</span> : <Skeleton className="h-6 w-24" />}
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">عدد الطلبات</span>

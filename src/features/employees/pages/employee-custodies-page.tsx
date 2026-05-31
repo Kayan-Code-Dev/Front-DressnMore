@@ -31,6 +31,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Shield, Search, Plus, Filter, Pencil, Trash2 } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 const statusMap: Record<string, { label: string; variant: "success" | "destructive" | "outline" }> = {
   active: { label: "نشطة", variant: "success" },
@@ -120,11 +121,11 @@ export function EmployeeCustodiesPage() {
           { label: "إجمالي العهد", value: stats.total },
           { label: "نشطة", value: stats.active },
           { label: "تنتهي قريباً", value: stats.expiring },
-          { label: "قيمة العهد النشطة", value: stats.totalValue.toLocaleString() },
+          { label: "قيمة العهد النشطة", value: stats.totalValue, isMoney: true },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border p-4" style={{ borderColor: "var(--color-border)" }}>
             <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className="text-lg font-black">{s.value}</p>
+            <p className="text-lg font-black">{"isMoney" in s && s.isMoney ? formatNumber(Number(s.value)) : s.value}</p>
           </div>
         ))}
       </div>
@@ -198,7 +199,7 @@ export function EmployeeCustodiesPage() {
                           <TableCell className="text-center font-medium">{row.employee_name}</TableCell>
                           <TableCell className="text-center">{typeLabels[row.type] ?? row.type}</TableCell>
                           <TableCell className="text-center text-muted-foreground text-xs max-w-[150px] truncate">{row.description}</TableCell>
-                          <TableCell className="text-center font-medium">{row.value.toLocaleString()}</TableCell>
+                          <TableCell className="text-center font-medium">{formatNumber(row.value)}</TableCell>
                           <TableCell className="text-center text-muted-foreground">{row.issued_at}</TableCell>
                           <TableCell className="text-center"><Badge variant={st.variant}>{st.label}</Badge></TableCell>
                           <TableCell>

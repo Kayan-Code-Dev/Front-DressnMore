@@ -169,7 +169,7 @@ export function CreateSalePage() {
                   <SelectTrigger className="mt-1.5"><SelectValue placeholder="اختر منتج" /></SelectTrigger>
                   <SelectContent>
                     {saleProductOptions.map((p) => (
-                      <SelectItem key={p.id} value={String(p.id)}>{p.name} — {p.price.toLocaleString("ar-EG")} ج.م</SelectItem>
+                      <SelectItem key={p.id} value={String(p.id)}>{p.name} — {p.price} ج.م</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -200,8 +200,8 @@ export function CreateSalePage() {
                     <TableCell className="text-center font-medium">{item.product_name}</TableCell>
                     <TableCell className="text-center"><Badge variant="outline" className="font-mono">{item.product_code}</Badge></TableCell>
                     <TableCell className="text-center">{item.quantity}</TableCell>
-                    <TableCell className="text-center">{item.unit_price.toLocaleString("ar-EG")} ج.م</TableCell>
-                    <TableCell className="text-center font-medium">{item.total.toLocaleString("ar-EG")} ج.م</TableCell>
+                    <TableCell className="text-center">{item.unit_price} ج.م</TableCell>
+                    <TableCell className="text-center font-medium">{item.total} ج.م</TableCell>
                     <TableCell className="text-center">
                       <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                     </TableCell>
@@ -225,9 +225,9 @@ export function CreateSalePage() {
           </div>
 
           <div className="rounded-lg bg-muted/30 p-4 max-w-sm mr-auto space-y-2">
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">المجموع</span><span>{subtotal.toLocaleString("ar-EG")} ج.م</span></div>
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">الخصم</span><span>- {discountVal.toLocaleString("ar-EG")} ج.م</span></div>
-            <div className="flex justify-between font-black text-lg border-t pt-2"><span>الإجمالي</span><span>{total.toLocaleString("ar-EG")} ج.م</span></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">المجموع</span><span>{subtotal} ج.م</span></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">الخصم</span><span>- {discountVal} ج.م</span></div>
+            <div className="flex justify-between font-black text-lg border-t pt-2"><span>الإجمالي</span><span>{total} ج.م</span></div>
           </div>
         </CardContent>
         <CardFooter className="flex justify-end gap-2">

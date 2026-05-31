@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, Search, Filter } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 const statusMap: Record<string, { label: string; variant: "destructive" | "warning" | "success" }> = {
   overdue: { label: "متأخر", variant: "destructive" },
@@ -85,7 +86,7 @@ export function OverdueReturnsPage() {
                       <TableCell className="text-center text-muted-foreground">{row.delivery_date}</TableCell>
                       <TableCell className="text-center text-muted-foreground">{row.expected_return_date}</TableCell>
                       <TableCell className="text-center"><Badge variant="destructive">{row.overdue_days} يوم</Badge></TableCell>
-                      <TableCell className="text-center font-medium">{row.amount.toLocaleString()}</TableCell>
+                      <TableCell className="text-center font-medium">{formatNumber(row.amount)}</TableCell>
                       <TableCell className="text-center"><Badge variant={statusMap[row.status]?.variant ?? "destructive"}>{statusMap[row.status]?.label ?? row.status}</Badge></TableCell>
                     </TableRow>
                   ))

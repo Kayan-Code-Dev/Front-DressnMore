@@ -33,6 +33,7 @@ import {
   CalendarOff,
   Banknote,
 } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 const statusMap: Record<string, { label: string; variant: "success" | "destructive" | "outline" }> = {
   active: { label: "نشط", variant: "success" },
@@ -139,7 +140,7 @@ export function EmployeesPage() {
         <StatCard label="إجمالي الموظفين" value={stats.total} icon={Users} color="linear-gradient(135deg, #7C3AED, #A78BFA)" />
         <StatCard label="نشط" value={stats.active} icon={UserCheck} color="linear-gradient(135deg, #10B981, #34D399)" />
         <StatCard label="في إجازة" value={stats.on_leave} icon={CalendarOff} color="linear-gradient(135deg, #F59E0B, #FBBF24)" />
-        <StatCard label="مجموع الرواتب" value={stats.salary_sum.toLocaleString()} icon={Banknote} color="linear-gradient(135deg, #3B82F6, #60A5FA)" />
+        <StatCard label="مجموع الرواتب" value={formatNumber(stats.salary_sum)} icon={Banknote} color="linear-gradient(135deg, #3B82F6, #60A5FA)" />
       </div>
 
       <Card className="w-full">
@@ -219,7 +220,7 @@ export function EmployeesPage() {
                         <TableCell className="text-center text-muted-foreground">{row.job_title}</TableCell>
                         <TableCell className="text-center text-muted-foreground">{row.branch_name}</TableCell>
                         <TableCell className="text-center" dir="ltr">{row.phone || "—"}</TableCell>
-                        <TableCell className="text-center font-medium">{row.base_salary.toLocaleString()}</TableCell>
+                        <TableCell className="text-center font-medium">{formatNumber(row.base_salary)}</TableCell>
                         <TableCell className="text-center">
                           <StatusBadge status={row.employment_status} />
                         </TableCell>

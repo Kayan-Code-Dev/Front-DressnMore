@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Wallet, ArrowRight, ArrowLeftRight } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 function DetailField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -150,21 +151,21 @@ export function CashboxDetailsPage() {
                   <CardContent className="pt-6">
                     <p className="text-sm text-muted-foreground mb-1">الرصيد الحالي</p>
                     <p className="text-2xl font-black text-amber-700 dark:text-amber-400">
-                      {cashbox.current_balance.toLocaleString()} ج.م
+                      {formatNumber(cashbox.current_balance)} ج.م
                     </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
                     <p className="text-sm text-muted-foreground mb-1">الرصيد الافتتاحي</p>
-                    <p className="text-2xl font-bold">{cashbox.initial_balance.toLocaleString()} ج.م</p>
+                    <p className="text-2xl font-bold">{formatNumber(cashbox.initial_balance)} ج.م</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
                     <p className="text-sm text-muted-foreground mb-1">صافي التغيير</p>
                     <p className="text-2xl font-bold text-emerald-600">
-                      {(cashbox.current_balance - cashbox.initial_balance).toLocaleString()} ج.م
+                      {formatNumber((cashbox.current_balance - cashbox.initial_balance))} ج.م
                     </p>
                   </CardContent>
                 </Card>
@@ -212,9 +213,9 @@ export function CashboxDetailsPage() {
                       <TableCell className="text-center text-xs max-w-[180px] truncate">{row.description}</TableCell>
                       <TableCell className="text-center font-medium">
                         {row.type === "in" ? "+" : "-"}
-                        {row.amount.toLocaleString()}
+                        {formatNumber(row.amount)}
                       </TableCell>
-                      <TableCell className="text-center font-bold">{row.balance_after.toLocaleString()}</TableCell>
+                      <TableCell className="text-center font-bold">{formatNumber(row.balance_after)}</TableCell>
                     </TableRow>
                   ))
                 ) : (

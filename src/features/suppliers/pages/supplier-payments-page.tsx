@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Banknote, Search } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 const methodMap: Record<string, string> = {
   cash: "نقدي",
@@ -72,7 +73,7 @@ export function SupplierPaymentsPage() {
                       <TableCell className="text-center text-muted-foreground">{row.id}</TableCell>
                       <TableCell className="text-center font-medium">{row.supplier}</TableCell>
                       <TableCell className="text-center"><Badge variant="outline" className="font-mono">{row.purchase_order_number}</Badge></TableCell>
-                      <TableCell className="text-center font-medium">{row.amount.toLocaleString()}</TableCell>
+                      <TableCell className="text-center font-medium">{formatNumber(row.amount)}</TableCell>
                       <TableCell className="text-center"><Badge variant="secondary">{methodMap[row.method] ?? row.method}</Badge></TableCell>
                       <TableCell className="text-center text-muted-foreground text-xs">{row.reference || "—"}</TableCell>
                       <TableCell className="text-center text-muted-foreground">{row.paid_at}</TableCell>

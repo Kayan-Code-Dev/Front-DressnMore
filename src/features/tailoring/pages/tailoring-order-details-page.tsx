@@ -133,15 +133,15 @@ export function TailoringOrderDetailsPage() {
           <div className="grid grid-cols-3 gap-4">
             <div className="rounded-lg bg-muted/30 p-4 text-center">
               <p className="text-xs text-muted-foreground">الإجمالي</p>
-              <p className="text-xl font-black mt-1">{order.total_price.toLocaleString("ar-EG")} ج.م</p>
+              <p className="text-xl font-black mt-1">{order.total_price} ج.م</p>
             </div>
             <div className="rounded-lg bg-green-50 dark:bg-green-950/30 p-4 text-center">
               <p className="text-xs text-muted-foreground">المحصّل</p>
-              <p className="text-xl font-black mt-1 text-green-700">{order.paid.toLocaleString("ar-EG")} ج.م</p>
+              <p className="text-xl font-black mt-1 text-green-700">{order.paid} ج.م</p>
             </div>
             <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 p-4 text-center">
               <p className="text-xs text-muted-foreground">المتبقي</p>
-              <p className="text-xl font-black mt-1 text-amber-700">{order.remaining.toLocaleString("ar-EG")} ج.م</p>
+              <p className="text-xl font-black mt-1 text-amber-700">{order.remaining} ج.م</p>
             </div>
           </div>
 

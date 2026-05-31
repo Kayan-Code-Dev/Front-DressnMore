@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Wallet, Search, Filter, ArrowRight, Lock } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 function TableSkeletonRows({ rows = 5, cols = 7 }: { rows?: number; cols?: number }) {
   return (
@@ -130,19 +131,19 @@ export function CashboxTransactionsPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground mb-1">إجمالي الوارد</p>
-            <p className="text-2xl font-bold text-emerald-600">{stats.incoming.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-emerald-600">{formatNumber(stats.incoming)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground mb-1">إجمالي الصادر</p>
-            <p className="text-2xl font-bold text-red-600">{stats.outgoing.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-red-600">{formatNumber(stats.outgoing)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground mb-1">صافي الحركة</p>
-            <p className="text-2xl font-bold">{stats.net.toLocaleString()}</p>
+            <p className="text-2xl font-bold">{formatNumber(stats.net)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -194,8 +195,8 @@ export function CashboxTransactionsPage() {
                         </TableCell>
                         <TableCell className="text-center text-xs text-muted-foreground">{row.reference}</TableCell>
                         <TableCell className="text-center text-xs max-w-[160px] truncate">{row.description}</TableCell>
-                        <TableCell className="text-center font-medium">{row.amount.toLocaleString()}</TableCell>
-                        <TableCell className="text-center font-bold">{row.balance_after.toLocaleString()}</TableCell>
+                        <TableCell className="text-center font-medium">{formatNumber(row.amount)}</TableCell>
+                        <TableCell className="text-center font-bold">{formatNumber(row.balance_after)}</TableCell>
                         <TableCell className="text-center text-muted-foreground text-xs">{row.created_by}</TableCell>
                       </TableRow>
                     ))

@@ -35,6 +35,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Wallet, Search, Plus, Filter, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 function fetchCashboxData(searchTerm: string, currentPage: number) {
   if (isModuleLive("cashboxes")) {
@@ -294,8 +295,8 @@ export function CashboxesPage() {
                         <TableCell className="text-center text-muted-foreground">{row.id}</TableCell>
                         <TableCell className="text-center font-medium">{row.name}</TableCell>
                         <TableCell className="text-center text-muted-foreground">{branchName(row.branch_id)}</TableCell>
-                        <TableCell className="text-center">{row.initial_balance.toLocaleString()}</TableCell>
-                        <TableCell className="text-center font-medium">{row.current_balance.toLocaleString()}</TableCell>
+                        <TableCell className="text-center">{formatNumber(row.initial_balance)}</TableCell>
+                        <TableCell className="text-center font-medium">{formatNumber(row.current_balance)}</TableCell>
                         <TableCell className="text-center"><Badge variant={row.is_active ? "success" : "destructive"}>{row.is_active ? "نشط" : "غير نشط"}</Badge></TableCell>
                         <TableCell className="text-center text-muted-foreground text-xs max-w-[150px] truncate">{row.description || "—"}</TableCell>
                         <TableCell className="text-center">

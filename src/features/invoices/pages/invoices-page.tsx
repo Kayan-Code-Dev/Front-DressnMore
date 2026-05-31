@@ -48,6 +48,7 @@ import {
   RotateCcw,
   XCircle,
 } from "lucide-react";
+import { formatNumber } from "@/shared/lib/format/numbers";
 
 function fetchInvoiceData(searchTerm: string, currentPage: number) {
   if (isModuleLive("invoices")) {
@@ -291,8 +292,8 @@ export function InvoicesPage() {
                         <TableCell className="text-center"><Badge variant="outline" className="font-mono">{row.invoice_number}</Badge></TableCell>
                         <TableCell className="text-center font-medium">#{row.customer_id}</TableCell>
                         <TableCell className="text-center"><Badge variant="secondary">{typeMap[row.type] ?? row.type}</Badge></TableCell>
-                        <TableCell className="text-center font-medium">{row.total.toLocaleString()}</TableCell>
-                        <TableCell className="text-center text-amber-700 font-medium">{(row.remaining_amount ?? 0).toLocaleString()}</TableCell>
+                        <TableCell className="text-center font-medium">{formatNumber(row.total)}</TableCell>
+                        <TableCell className="text-center text-amber-700 font-medium">{formatNumber((row.remaining_amount ?? 0))}</TableCell>
                         <TableCell className="text-center"><StatusBadge status={row.status} /></TableCell>
                         <TableCell className="text-center text-muted-foreground">{formatDate(row.created_at)}</TableCell>
                         <TableCell className="text-center">
@@ -338,7 +339,7 @@ export function InvoicesPage() {
           <form onSubmit={handlePayment}>
             <DialogHeader>
               <DialogTitle>تسجيل دفعة</DialogTitle>
-              <DialogDescription>فاتورة {selected?.invoice_number} — المتبقي: {(selected?.remaining_amount ?? 0).toLocaleString()}</DialogDescription>
+              <DialogDescription>فاتورة {selected?.invoice_number} — المتبقي: {formatNumber((selected?.remaining_amount ?? 0))}</DialogDescription>
             </DialogHeader>
             <div className="grid gap-3 py-2">
               <div className="space-y-2">

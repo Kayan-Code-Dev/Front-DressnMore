@@ -140,15 +140,15 @@ export function OrderDetailsPage() {
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="rounded-lg bg-muted/30 p-4 text-center">
               <p className="text-xs text-muted-foreground">الإجمالي</p>
-              <p className="text-xl font-black mt-1">{order.total_price.toLocaleString("ar-EG")} ج.م</p>
+              <p className="text-xl font-black mt-1">{order.total_price} ج.م</p>
             </div>
             <div className="rounded-lg bg-green-50 dark:bg-green-950/30 p-4 text-center">
               <p className="text-xs text-muted-foreground">المحصّل</p>
-              <p className="text-xl font-black mt-1 text-green-700">{order.paid.toLocaleString("ar-EG")} ج.م</p>
+              <p className="text-xl font-black mt-1 text-green-700">{order.paid} ج.م</p>
             </div>
             <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 p-4 text-center">
               <p className="text-xs text-muted-foreground">المتبقي</p>
-              <p className="text-xl font-black mt-1 text-amber-700">{order.remaining.toLocaleString("ar-EG")} ج.م</p>
+              <p className="text-xl font-black mt-1 text-amber-700">{order.remaining} ج.م</p>
             </div>
           </div>
 
@@ -179,7 +179,7 @@ export function OrderDetailsPage() {
                         <TableCell className="text-center"><Badge variant="outline" className="font-mono">{item.cloth_code}</Badge></TableCell>
                         <TableCell className="text-center">{item.size}</TableCell>
                         <TableCell className="text-center">{item.color}</TableCell>
-                        <TableCell className="text-center">{item.rental_price.toLocaleString("ar-EG")} ج.م</TableCell>
+                        <TableCell className="text-center">{item.rental_price} ج.م</TableCell>
                         <TableCell className="text-center text-muted-foreground text-xs">{item.return_date}</TableCell>
                       </TableRow>
                     ))}
@@ -204,7 +204,7 @@ export function OrderDetailsPage() {
                     {(order.payments ?? []).length > 0 ? (order.payments ?? []).map((p) => (
                       <TableRow key={p.id}>
                         <TableCell className="text-center text-muted-foreground">{p.id}</TableCell>
-                        <TableCell className="text-center font-medium">{p.amount.toLocaleString("ar-EG")} ج.م</TableCell>
+                        <TableCell className="text-center font-medium">{p.amount} ج.م</TableCell>
                         <TableCell className="text-center">{paymentMethodLabels[p.method] ?? p.method}</TableCell>
                         <TableCell className="text-center text-muted-foreground text-xs">{p.paid_at}</TableCell>
                         <TableCell className="text-center text-muted-foreground">{p.notes ?? "—"}</TableCell>
@@ -236,7 +236,7 @@ export function OrderDetailsPage() {
                         <TableRow key={c.id}>
                           <TableCell className="text-center text-muted-foreground">{c.id}</TableCell>
                           <TableCell className="text-center font-medium">{c.item_name}</TableCell>
-                          <TableCell className="text-center">{c.value > 0 ? `${c.value.toLocaleString("ar-EG")} ج.م` : "—"}</TableCell>
+                          <TableCell className="text-center">{c.value > 0 ? `${c.value} ج.م` : "—"}</TableCell>
                           <TableCell className="text-center"><Badge variant={cfg.variant}>{cfg.label}</Badge></TableCell>
                           <TableCell className="text-center text-muted-foreground text-xs">{c.received_at}</TableCell>
                         </TableRow>
