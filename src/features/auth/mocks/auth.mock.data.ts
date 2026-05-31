@@ -1,0 +1,47 @@
+import type { MockLoginResult } from "@/features/auth/types/auth.types";
+
+export const mockLoginData: MockLoginResult = {
+  token: "mock-token-001",
+  tenant: {
+    id: "tenant-001",
+    slug: "dressnmore-demo",
+    name: "DressnMore Tenant",
+  },
+  user: {
+    id: 1,
+    name: "Demo User",
+    email: "demo@dressnmore.local",
+  },
+  permissions: [
+    "customers.view",
+    "dresses.view",
+    "invoices.view",
+    "dress_categories.view",
+    "branches.view",
+    "invoice_delivery.view",
+    "payments.view",
+    "cashboxes.view",
+    "expenses.view",
+    "cash_movements.view",
+    "suppliers.view",
+    "purchase_orders.view",
+    "supplier_payments.view",
+    "reports.view",
+    "reports.sales",
+    "reports.tailoring",
+    "accounting.view",
+    "settings.view",
+    "settings.profile",
+    "subscription.view",
+  ],
+  subscription: {
+    account_type: "free",
+    lifecycle_status: "active",
+    plan_code: "free",
+    plan_name: "مجاني",
+    starts_at: "2026-05-01",
+    expires_at: "2026-06-30",
+    can_renew: true,
+    days_remaining: 31,
+  },
+};
