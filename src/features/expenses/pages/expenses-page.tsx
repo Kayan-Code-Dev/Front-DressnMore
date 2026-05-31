@@ -1,24 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import { isModuleLive } from "@/config/feature-flags";
 import type { BranchItem } from "@/features/branches/types/branches.types";
 import { listBranches } from "@/features/branches/services/branches.api.service";
+import { listBranchesMock } from "@/features/branches/services/branches.mock.service";
 import type { CashboxItem } from "@/features/cashboxes/types/cashboxes.types";
 import { listCashboxes } from "@/features/cashboxes/services/cashboxes.api.service";
-import type { ExpenseCategoryItem, ExpenseItem } from "@/features/expenses/types/expenses.types";
+import { listCashboxesMock } from "@/features/cashboxes/services/cashboxes.mock.service";
+import type { ExpenseCategoryItem, ExpenseFilterParams, ExpenseItem, ExpenseSummary } from "@/features/expenses/types/expenses.types";
 import { listExpenseCategories } from "@/features/expenses/services/expense-categories.api.service";
-import { listExpensesMock } from "@/features/expenses/services/expenses.mock.service";
+import { expenseCategoriesFixture } from "@/features/expenses/mocks/expenses.mock";
+import { getExpensesSummaryMock, listExpensesMock } from "@/features/expenses/services/expenses.mock.service";
 import {
   approveExpense,
   cancelExpense,
   createExpense,
   deleteExpense,
+  getExpensesSummary,
   listExpenses,
   payExpense,
   updateExpense,
 } from "@/features/expenses/services/expenses.api.service";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { FinanceListFiltersBar } from "@/components/shared/FinanceListFiltersBar";
+import { FinanceStatsCards } from "@/components/shared/FinanceStatsCards";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,9 +47,6 @@ import {
 } from "@/components/ui/dialog";
 import {
   Receipt,
-  Search,
-  Plus,
-  Filter,
   Pencil,
   Trash2,
   ChevronLeft,
@@ -52,6 +54,10 @@ import {
   CheckCircle,
   XCircle,
   Banknote,
+  CircleDollarSign,
+  Clock,
+  Eye,
+  Printer,
 } from "lucide-react";
 import { formatNumber } from "@/shared/lib/format/numbers";
 
@@ -62,11 +68,13 @@ const PAYMENT_METHODS = [
   { value: "bank_transfer", label: "تحويل بنكي" },
 ];
 
-function fetchExpenseData(searchTerm: string, currentPage: number) {
+const defaultFilters: ExpenseFilterParams = {};
+
+function fetchExpenseData(params: ExpenseFilterParams & { page?: number; per_page?: number }) {
   if (isModuleLive("expenses")) {
-    return listExpenses({ search: searchTerm, page: currentPage, per_page: 15 });
+    return listExpenses({ ...params, page: params.page ?? 1, per_page: params.per_page ?? 15 });
   }
-  return listExpensesMock(searchTerm);
+  return listExpensesMock({ ...params, page: params.page ?? 1, per_page: params.per_page ?? 15 });
 }
 
 const statusMap: Record<string, { label: string; variant: "success" | "warning" | "destructive" | "info" }> = {
@@ -123,9 +131,11 @@ function TableSkeletonRows({ rows = 5, cols = 9 }: { rows?: number; cols?: numbe
 
 export function ExpensesPage() {
   const [loading, setLoading] = useState(true);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<ExpenseFilterParams>(defaultFilters);
+  const [summary, setSummary] = useState<ExpenseSummary | null>(null);
   const [rows, setRows] = useState<ExpenseItem[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -151,24 +161,45 @@ export function ExpensesPage() {
     return (id: number | null) => (id ? map.get(id) ?? `#${id}` : "—");
   }, [cashboxes]);
 
+  const filterParams = useMemo(
+    (): ExpenseFilterParams => ({ ...filters, search: search.trim() || undefined }),
+    [filters, search],
+  );
+
   useEffect(() => {
-    if (!isModuleLive("expenses")) return;
-    Promise.all([
-      listBranches({ per_page: 100 }),
-      listCashboxes({ per_page: 100 }),
-      listExpenseCategories({ per_page: 100 }),
-    ])
-      .then(([bRes, cRes, catRes]) => {
-        setBranches(bRes.data);
-        setCashboxes(cRes.data);
-        setCategories(catRes.data);
+    const loadBranches = isModuleLive("expenses")
+      ? () => listBranches({ per_page: 100 }).then((r) => r.data)
+      : () => listBranchesMock().then((r) => r.data);
+    const loadCashboxes = isModuleLive("expenses")
+      ? () => listCashboxes({ per_page: 100 }).then((r) => r.data)
+      : () => listCashboxesMock().then((r) => r.data);
+    const loadCategories = isModuleLive("expenses")
+      ? () => listExpenseCategories({ per_page: 100 }).then((r) => r.data)
+      : () => Promise.resolve(expenseCategoriesFixture);
+
+    Promise.all([loadBranches(), loadCashboxes(), loadCategories()])
+      .then(([b, c, cat]) => {
+        setBranches(b);
+        setCashboxes(c);
+        setCategories(cat);
       })
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    setStatsLoading(true);
+    const loadSummary = isModuleLive("expenses")
+      ? () => getExpensesSummary(filterParams)
+      : () => getExpensesSummaryMock().then((r) => r.data);
+
+    loadSummary()
+      .then(setSummary)
+      .finally(() => setStatsLoading(false));
+  }, [filterParams, reloadKey]);
+
   const loadRows = useCallback(() => {
     setLoading(true);
-    fetchExpenseData(search, page)
+    fetchExpenseData({ ...filterParams, page, per_page: 15 })
       .then((response) => {
         setRows(response.data);
         const meta = response.meta as { last_page?: number; total?: number } | null | undefined;
@@ -181,7 +212,13 @@ export function ExpensesPage() {
         setRows([]);
       })
       .finally(() => setLoading(false));
-  }, [search, page]);
+  }, [filterParams, page]);
+
+  const resetFilters = () => {
+    setSearch("");
+    setFilters(defaultFilters);
+    setPage(1);
+  };
 
   useEffect(() => {
     loadRows();
@@ -380,99 +417,151 @@ export function ExpensesPage() {
     </div>
   );
 
-  const columns = useMemo(
-    () => [
-      { key: "id", title: "#" },
-      { key: "branch", title: "الفرع" },
-      { key: "cashbox", title: "الصندوق" },
-      { key: "category", title: "التصنيف" },
-      { key: "vendor", title: "المورد" },
-      { key: "amount", title: "المبلغ" },
-      { key: "expense_date", title: "التاريخ" },
-      { key: "status", title: "الحالة" },
-      { key: "actions", title: "إجراءات" },
-    ],
-    [],
-  );
+  const statCards = summary
+    ? [
+        { label: "إجمالي المصروفات", subLabel: "معاملة", value: summary.total_count ?? total, icon: Receipt, gradient: "linear-gradient(135deg, #DC2626, #F87171)" },
+        { label: "المبلغ الكلي", subLabel: "جنيه مصري", value: summary.total_amount, icon: CircleDollarSign, gradient: "linear-gradient(135deg, #B91C1C, #EF4444)" },
+        { label: "تم الدفع", subLabel: "جنيه مصري", value: summary.paid_amount, icon: CheckCircle, gradient: "linear-gradient(135deg, #059669, #34D399)", valueColor: "#059669" },
+        { label: "في الانتظار", subLabel: "جنيه مصري", value: summary.pending_amount + summary.approved_amount, icon: Clock, gradient: "linear-gradient(135deg, #D97706, #FBBF24)", valueColor: "#D97706" },
+      ]
+    : [];
+
+  const paidCount = rows.filter((r) => r.status === "paid").length;
+  const pendingCount = rows.filter((r) => r.status === "pending" || r.status === "approved").length;
+  const cancelledCount = rows.filter((r) => r.status === "cancelled").length;
 
   return (
-    <div className="w-full">
-      <Card className="w-full">
-        <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #DC2626, #F87171)" }}>
-              <Receipt className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-lg font-black" style={{ color: "var(--color-text-primary)" }}>إدارة المصروفات</CardTitle>
-              <CardDescription>عرض وإدارة المصروفات في النظام.</CardDescription>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" onClick={() => setFiltersOpen((v) => !v)}><Filter className="h-4 w-4 ml-1.5" />الفلاتر</Button>
-            <Button disabled={!isModuleLive("expenses")} onClick={openCreate}><Plus className="h-4 w-4 ml-1.5" />إنشاء مصروف</Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="بحث عن مصروف..." className="pr-9" />
-            </div>
-          </div>
-          <ListPageStandardFilters open={filtersOpen} />
+    <div className="w-full max-w-full space-y-5 overflow-x-hidden" dir="rtl">
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #DC2626, #F87171)" }}>
+          <Receipt className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-xl font-black">قوائم المصروفات</h1>
+          <p className="text-sm text-muted-foreground">عرض وإدارة جميع المصروفات والمدفوعات</p>
+        </div>
+      </div>
 
-          {error && <div className="flex items-center justify-center py-6"><p className="text-destructive text-sm">حدث خطأ أثناء تحميل البيانات: {error}</p></div>}
-          {!error && (
-            <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
-              <Table>
-                <TableHeader><TableRow className="bg-muted/30">{columns.map((col) => (<TableHead key={col.key} className="text-center font-bold text-xs">{col.title}</TableHead>))}</TableRow></TableHeader>
-                <TableBody>
-                  {loading ? (<TableSkeletonRows rows={5} cols={columns.length} />) : rows.length > 0 ? (
-                    rows.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell className="text-center text-muted-foreground">{row.id}</TableCell>
-                        <TableCell className="text-center text-muted-foreground">{branchName(row.branch_id)}</TableCell>
-                        <TableCell className="text-center text-muted-foreground">{cashboxName(row.cashbox_id)}</TableCell>
-                        <TableCell className="text-center">{row.category?.name ?? "—"}</TableCell>
-                        <TableCell className="text-center text-muted-foreground">{row.vendor || "—"}</TableCell>
-                        <TableCell className="text-center font-medium">{formatNumber(row.amount)}</TableCell>
-                        <TableCell className="text-center text-muted-foreground">{row.expense_date}</TableCell>
-                        <TableCell className="text-center"><StatusBadge status={row.status} /></TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-1 flex-wrap">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!isModuleLive("expenses")} onClick={() => openEdit(row)}><Pencil className="h-3.5 w-3.5 text-muted-foreground" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!isModuleLive("expenses")} onClick={() => openDelete(row)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
-                            {row.status === "pending" && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!isModuleLive("expenses")} onClick={() => handleApprove(row)} title="موافقة"><CheckCircle className="h-3.5 w-3.5 text-emerald-600" /></Button>
-                            )}
-                            {row.status === "approved" && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!isModuleLive("expenses")} onClick={() => openPay(row)} title="دفع"><Banknote className="h-3.5 w-3.5 text-blue-600" /></Button>
-                            )}
-                            {(row.status === "pending" || row.status === "approved") && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!isModuleLive("expenses")} onClick={() => handleCancel(row)} title="إلغاء"><XCircle className="h-3.5 w-3.5 text-destructive" /></Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow><TableCell colSpan={columns.length} className="py-10 text-center text-muted-foreground">لا توجد مصروفات لعرضها.</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+      <FinanceStatsCards stats={statCards} loading={statsLoading} />
+
+      <FinanceListFiltersBar
+        search={search}
+        onSearchChange={(v) => { setSearch(v); setPage(1); }}
+        searchPlaceholder="المورد، التصنيف، رقم المصروف..."
+        selects={[
+          {
+            id: "category",
+            label: "التصنيف",
+            value: filters.expense_category_id ? String(filters.expense_category_id) : "",
+            options: categories.map((c) => ({ value: String(c.id), label: c.name })),
+            onChange: (v) => { setFilters((f) => ({ ...f, expense_category_id: v ? Number(v) : undefined })); setPage(1); },
+          },
+          {
+            id: "branch",
+            label: "الفرع",
+            value: filters.branch_id ? String(filters.branch_id) : "",
+            options: branches.map((b) => ({ value: String(b.id), label: b.name })),
+            onChange: (v) => { setFilters((f) => ({ ...f, branch_id: v ? Number(v) : undefined })); setPage(1); },
+          },
+          {
+            id: "status",
+            label: "الحالة",
+            value: filters.status ?? "",
+            options: [
+              { value: "pending", label: "معلق" },
+              { value: "approved", label: "موافق عليه" },
+              { value: "paid", label: "مدفوع" },
+              { value: "cancelled", label: "ملغي" },
+            ],
+            onChange: (v) => { setFilters((f) => ({ ...f, status: v || undefined })); setPage(1); },
+          },
+        ]}
+        dateFrom={filters.date_from ?? ""}
+        dateTo={filters.date_to ?? ""}
+        onDateFromChange={(v) => { setFilters((f) => ({ ...f, date_from: v || undefined })); setPage(1); }}
+        onDateToChange={(v) => { setFilters((f) => ({ ...f, date_to: v || undefined })); setPage(1); }}
+        onReset={resetFilters}
+        resultCount={rows.length}
+        totalCount={total}
+        onExportExcel={() => {}}
+        onExportPdf={() => {}}
+        primaryAction={{ label: "مصروف جديد", onClick: openCreate, disabled: !isModuleLive("expenses") }}
+      />
+
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}
+
+      <Card className="border-0 shadow-sm overflow-hidden">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto max-w-full">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#1a3a6d] hover:bg-[#1a3a6d]">
+                  {["رقم", "الفرع", "الصندوق", "التصنيف", "المورد", "المبلغ", "التاريخ", "الحالة", "ملاحظات", "الإجراءات"].map((h) => (
+                    <TableHead key={h} className="text-center font-bold text-xs text-white whitespace-nowrap">{h}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableSkeletonRows rows={5} cols={10} />
+                ) : rows.length === 0 ? (
+                  <TableRow><TableCell colSpan={10} className="py-12 text-center text-muted-foreground">لا توجد مصروفات</TableCell></TableRow>
+                ) : (
+                  rows.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell className="text-center">
+                        <div className="text-xs font-mono text-blue-600">{row.reference_number ?? `EXP-${row.id}`}</div>
+                        <div className="text-[10px] text-muted-foreground">#{row.id}</div>
+                      </TableCell>
+                      <TableCell className="text-center text-sm whitespace-nowrap">{branchName(row.branch_id)}</TableCell>
+                      <TableCell className="text-center text-sm whitespace-nowrap">{cashboxName(row.cashbox_id)}</TableCell>
+                      <TableCell className="text-center"><Badge variant="secondary">{row.category?.name ?? "—"}</Badge></TableCell>
+                      <TableCell className="text-center text-sm">{row.vendor || "—"}</TableCell>
+                      <TableCell className="text-center font-bold whitespace-nowrap">{formatNumber(row.amount)} ج.م</TableCell>
+                      <TableCell className="text-center text-xs text-muted-foreground whitespace-nowrap">{row.expense_date}</TableCell>
+                      <TableCell className="text-center"><StatusBadge status={row.status} /></TableCell>
+                      <TableCell className="text-center text-xs text-muted-foreground max-w-[120px] truncate">{row.notes || row.description || "—"}</TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1 flex-wrap">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" title="عرض"><Eye className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" disabled={!isModuleLive("expenses")} onClick={() => openEdit(row)}><Pencil className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" title="طباعة"><Printer className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" disabled={!isModuleLive("expenses")} onClick={() => openDelete(row)}><Trash2 className="h-3.5 w-3.5 text-red-500" /></Button>
+                          {row.status === "pending" && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" disabled={!isModuleLive("expenses")} onClick={() => handleApprove(row)} title="موافقة"><CheckCircle className="h-3.5 w-3.5 text-green-600" /></Button>
+                          )}
+                          {row.status === "approved" && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" disabled={!isModuleLive("expenses")} onClick={() => openPay(row)} title="دفع"><Banknote className="h-3.5 w-3.5 text-blue-600" /></Button>
+                          )}
+                          {(row.status === "pending" || row.status === "approved") && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" disabled={!isModuleLive("expenses")} onClick={() => handleCancel(row)} title="إلغاء"><XCircle className="h-3.5 w-3.5 text-red-500" /></Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
-        <CardFooter className="flex items-center justify-between flex-wrap gap-3">
-          <p className="text-sm text-muted-foreground">إجمالي المصروفات: <span className="font-bold">{total}</span></p>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronRight className="h-4 w-4" />السابق</Button>
-              <span className="text-sm text-muted-foreground px-2">{page} / {totalPages}</span>
-              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>التالي<ChevronLeft className="h-4 w-4" /></Button>
-            </div>
-          )}
+
+        <CardFooter className="flex flex-col sm:flex-row items-center justify-between gap-3 py-3 px-4 bg-muted/20 border-t">
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            <span className="text-green-600 font-medium">{paidCount} مدفوع</span>
+            <span className="text-amber-600 font-medium">{pendingCount} معلق</span>
+            <span className="text-red-500 font-medium">{cancelledCount} ملغي</span>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap justify-center">
+            <span className="text-sm font-bold">الإجمالي: {formatNumber(summary?.total_amount ?? 0)} ج.م</span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronRight className="h-4 w-4" /></Button>
+                <span className="text-xs text-muted-foreground">{page}/{totalPages}</span>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}><ChevronLeft className="h-4 w-4" /></Button>
+              </div>
+            )}
+          </div>
         </CardFooter>
       </Card>
 

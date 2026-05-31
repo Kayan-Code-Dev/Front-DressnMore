@@ -26,6 +26,7 @@ export type ExpenseItem = {
 };
 
 export type ExpenseFilterParams = {
+  search?: string;
   expense_category_id?: number;
   branch_id?: number;
   cashbox_id?: number;
@@ -33,6 +34,15 @@ export type ExpenseFilterParams = {
   method?: string;
   date_from?: string;
   date_to?: string;
+};
+
+export type ExpenseSummary = {
+  total_amount: number;
+  pending_amount: number;
+  approved_amount: number;
+  paid_amount: number;
+  cancelled_amount: number;
+  total_count?: number;
 };
 
 export type ExpensePayload = {

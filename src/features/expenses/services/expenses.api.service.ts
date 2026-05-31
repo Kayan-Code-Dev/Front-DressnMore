@@ -7,6 +7,7 @@ import type {
   ExpenseItem,
   ExpensePayPayload,
   ExpensePayload,
+  ExpenseSummary,
 } from "@/features/expenses/types/expenses.types";
 
 export async function listExpenses(
@@ -15,6 +16,15 @@ export async function listExpenses(
   const qs = buildQueryString(params as Record<string, string | number | boolean | null | undefined>);
   const response = await httpClient.get<ExpenseItem[]>(tenantPath(`/expenses${qs}`));
   return httpClient.unwrap(response) as PaginatedResponse<ExpenseItem>;
+}
+
+export async function getExpensesSummary(
+  params: ExpenseFilterParams = {},
+): Promise<ExpenseSummary> {
+  const qs = buildQueryString(params as Record<string, string | number | boolean | null | undefined>);
+  const response = await httpClient.get<ExpenseSummary>(tenantPath(`/expenses/summary${qs}`));
+  if (!response.success) throw new Error(response.message);
+  return response.data;
 }
 
 export async function createExpense(payload: ExpensePayload): Promise<ApiSuccess<ExpenseItem>> {
