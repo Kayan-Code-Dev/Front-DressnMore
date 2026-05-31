@@ -22,3 +22,9 @@ export async function listDressesMock(search = ""): Promise<ApiSuccess<DressItem
     },
   };
 }
+
+export async function getDressMock(id: number): Promise<ApiSuccess<DressItem | null>> {
+  await delay(200);
+  const data = dressesFixture.find((item) => item.id === id) ?? null;
+  return { success: true, message: "Success", data, meta: null };
+}

@@ -18,3 +18,15 @@ export type LedgerEntry = {
   credit: number;
   balance: number;
 };
+
+export type TreasuryEntry = {
+  id: number;
+  entry_number: string;
+  date: string;
+  account: string;
+  description: string;
+  debit: number;
+  credit: number;
+  status: "posted" | "draft" | "cancelled";
+  created_by: string;
+};

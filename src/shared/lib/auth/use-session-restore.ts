@@ -28,7 +28,7 @@ export function useSessionRestore(): { restoring: boolean } {
           tenant: response.data.tenant,
           user: response.data.user,
           permissions: response.data.permissions,
-          subscription: response.data.subscription,
+          subscription: response.data.subscription ?? session.subscription,
         });
       }
 

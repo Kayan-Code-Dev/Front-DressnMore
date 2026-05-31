@@ -49,16 +49,19 @@ export function LoginPage() {
         return;
       }
 
+      const subscription = response.data.subscription;
+
       sessionStore.setSession({
         token: response.data.token,
         tenant: response.data.tenant,
         user: response.data.user,
         permissions: response.data.permissions,
-        subscription: response.data.subscription,
+        subscription,
       });
 
-      const destination = response.data.subscription.lifecycle_status === "expired"
+      const destination = subscription?.lifecycle_status === "expired"
         ? "/settings/subscription"
+        : "/dashboard";
         : "/dashboard";
 
       navigate(destination, { replace: true });

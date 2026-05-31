@@ -25,12 +25,23 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
   Users,
   Search,
   Plus,
   Filter,
   ChevronLeft,
   ChevronRight,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 function fetchCustomerData(searchTerm: string, currentPage: number) {
@@ -73,6 +84,8 @@ export function CustomersPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<CustomerItem[]>([]);
+  const [dialog, setDialog] = useState<null | "create" | "edit" | "delete">(null);
+  const [selected, setSelected] = useState<CustomerItem | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -120,6 +133,7 @@ export function CustomersPage() {
       { key: "city", title: "المدينة" },
       { key: "status", title: "الحالة" },
       { key: "joined_at", title: "تاريخ الانضمام" },
+      { key: "actions", title: "إجراءات" },
     ],
     []
   );
@@ -147,7 +161,7 @@ export function CustomersPage() {
               <Filter className="h-4 w-4 ml-1.5" />
               الفلاتر
             </Button>
-            <Button disabled>
+            <Button onClick={() => setDialog("create")}>
               <Plus className="h-4 w-4 ml-1.5" />
               إنشاء عميل جديد
             </Button>
@@ -205,6 +219,26 @@ export function CustomersPage() {
                         <TableCell className="text-center text-muted-foreground text-xs">
                           {row.joined_at || "—"}
                         </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => { setSelected(row); setDialog("edit"); }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive"
+                              onClick={() => { setSelected(row); setDialog("delete"); }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -251,6 +285,48 @@ export function CustomersPage() {
           )}
         </CardFooter>
       </Card>
+
+      <Dialog open={dialog === "create" || dialog === "edit"} onOpenChange={() => setDialog(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{dialog === "edit" ? "تعديل عميل" : "إنشاء عميل جديد"}</DialogTitle>
+            <DialogDescription>أدخل بيانات العميل الأساسية.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div className="space-y-2">
+              <Label>الاسم</Label>
+              <Input defaultValue={selected?.name ?? ""} placeholder="اسم العميل" />
+            </div>
+            <div className="space-y-2">
+              <Label>الهاتف</Label>
+              <Input defaultValue={selected?.phone ?? ""} placeholder="+2010..." dir="ltr" />
+            </div>
+            <div className="space-y-2">
+              <Label>المدينة</Label>
+              <Input defaultValue={selected?.city ?? ""} placeholder="المدينة" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialog(null)}>إلغاء</Button>
+            <Button onClick={() => setDialog(null)}>{dialog === "edit" ? "حفظ" : "إنشاء"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialog === "delete"} onOpenChange={() => setDialog(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>حذف العميل</DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من حذف {selected?.name}؟ لا يمكن التراجع عن هذا الإجراء.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialog(null)}>إلغاء</Button>
+            <Button variant="destructive" onClick={() => setDialog(null)}>حذف</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

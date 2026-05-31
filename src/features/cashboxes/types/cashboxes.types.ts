@@ -12,3 +12,15 @@ export type CashboxFilterParams = {
   branch_id?: number;
   status?: string;
 };
+
+export type CashboxTransaction = {
+  id: number;
+  cashbox_id: number;
+  date: string;
+  type: "in" | "out";
+  reference: string;
+  description: string;
+  amount: number;
+  balance_after: number;
+  created_by: string;
+};

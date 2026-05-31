@@ -1,4 +1,4 @@
-import type { CashboxItem } from "@/features/cashboxes/types/cashboxes.types";
+import type { CashboxItem, CashboxTransaction } from "@/features/cashboxes/types/cashboxes.types";
 
 export const cashboxesFixture: CashboxItem[] = [
   {
@@ -27,5 +27,63 @@ export const cashboxesFixture: CashboxItem[] = [
     current_balance: 1200,
     is_active: false,
     description: "Legacy cashbox",
+  },
+];
+
+export const cashboxTransactionsFixture: CashboxTransaction[] = [
+  {
+    id: 1,
+    cashbox_id: 1,
+    date: "2026-05-30",
+    type: "in",
+    reference: "PAY-4401",
+    description: "دفعة عميل — طلب إيجار",
+    amount: 3500,
+    balance_after: 24300,
+    created_by: "أحمد محمد",
+  },
+  {
+    id: 2,
+    cashbox_id: 1,
+    date: "2026-05-29",
+    type: "out",
+    reference: "EXP-220",
+    description: "مصروفات تشغيلية",
+    amount: 800,
+    balance_after: 20800,
+    created_by: "سارة علي",
+  },
+  {
+    id: 3,
+    cashbox_id: 1,
+    date: "2026-05-28",
+    type: "in",
+    reference: "PAY-4390",
+    description: "دفعة مقدمة — فستان زفاف",
+    amount: 5000,
+    balance_after: 21600,
+    created_by: "أحمد محمد",
+  },
+  {
+    id: 4,
+    cashbox_id: 2,
+    date: "2026-05-30",
+    type: "in",
+    reference: "PAY-4410",
+    description: "تحصيل نقدي",
+    amount: 1200,
+    balance_after: 8900,
+    created_by: "منى حسن",
+  },
+  {
+    id: 5,
+    cashbox_id: 2,
+    date: "2026-05-27",
+    type: "out",
+    reference: "SUP-88",
+    description: "دفعة مورد",
+    amount: 2400,
+    balance_after: 7700,
+    created_by: "منى حسن",
   },
 ];
