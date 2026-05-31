@@ -1,11 +1,12 @@
 import { sidebarLabels } from "@/components/app/sidebar/constants";
 import type { SidebarLabel } from "@/components/app/sidebar/constants";
 
-export type RouteInfo = { title: string; parent?: string };
+export type RouteInfo = { title: string; parent?: string; parentPath?: string };
 
 function collectRoutes(
   items: SidebarLabel[],
-  parentLabel?: string
+  parentLabel?: string,
+  parentPath?: string,
 ): Record<string, RouteInfo> {
   const out: Record<string, RouteInfo> = {};
   for (const item of items) {
@@ -13,11 +14,13 @@ function collectRoutes(
       out[item.path] = {
         title: item.label,
         parent: parentLabel,
+        parentPath,
       };
     }
     if (item.subItems?.length) {
       const nextParent = item.path ? item.label : parentLabel;
-      Object.assign(out, collectRoutes(item.subItems, nextParent));
+      const nextParentPath = item.path ?? parentPath;
+      Object.assign(out, collectRoutes(item.subItems, nextParent, nextParentPath));
     }
   }
   return out;
