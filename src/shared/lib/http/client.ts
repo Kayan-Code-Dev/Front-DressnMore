@@ -48,8 +48,16 @@ const getTenantHeaders = () => {
     headers.Authorization = `Bearer ${session.token}`;
   }
 
-  if (session.workspace) {
-    headers["X-Tenant"] = session.workspace;
+  const tenantSlug =
+    session.tenant &&
+    typeof session.tenant === "object" &&
+    "slug" in session.tenant &&
+    typeof (session.tenant as { slug?: string }).slug === "string"
+      ? (session.tenant as { slug: string }).slug
+      : session.workspace;
+
+  if (tenantSlug) {
+    headers["X-Tenant"] = tenantSlug;
   }
 
   return headers;

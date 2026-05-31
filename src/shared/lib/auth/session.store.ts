@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from "react";
 import { storage } from "@/shared/lib/storage/storage";
 
+import type { TenantSubscription } from "@/features/auth/types/auth.types";
+
 const SESSION_STORAGE_KEY = "dressnmore.session";
 
 export type SessionState = {
@@ -9,7 +11,7 @@ export type SessionState = {
   tenant: unknown | null;
   user: unknown | null;
   permissions: string[];
-  plan: unknown | null;
+  subscription: TenantSubscription | null;
 };
 
 export type SessionPayload = SessionState;
@@ -29,7 +31,7 @@ const defaultState: SessionState = {
   tenant: null,
   user: null,
   permissions: [],
-  plan: null,
+  subscription: null,
 };
 
 let state: SessionState = storage.get<SessionState>(SESSION_STORAGE_KEY, defaultState);
@@ -51,7 +53,7 @@ export const sessionStore: SessionStoreShape = {
       tenant: payload.tenant,
       user: payload.user,
       permissions: [...payload.permissions],
-      plan: payload.plan,
+      subscription: payload.subscription,
     };
     storage.set(SESSION_STORAGE_KEY, state);
     emit();

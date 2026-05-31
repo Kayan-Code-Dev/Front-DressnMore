@@ -1,10 +1,9 @@
-import type { MockLoginResult } from "@/features/auth/types/auth.types";
+import type { LoginResult } from "@/features/auth/types/auth.types";
 
-export const mockLoginData: MockLoginResult = {
+export const mockLoginData: LoginResult = {
   token: "mock-token-001",
-  workspace: "main-workspace",
   tenant: {
-    id: "tenant-001",
+    id: 1,
     slug: "main-workspace",
     name: "DressnMore Tenant",
   },
@@ -34,8 +33,14 @@ export const mockLoginData: MockLoginResult = {
     "settings.view",
     "settings.profile",
   ],
-  plan: {
-    code: "pro",
-    name: "Pro",
+  subscription: {
+    account_type: "paid",
+    lifecycle_status: "active",
+    plan_code: "pro",
+    plan_name: "Pro",
+    starts_at: "2026-01-01T00:00:00.000Z",
+    expires_at: "2027-01-01T00:00:00.000Z",
+    can_renew: true,
+    days_remaining: 365,
   },
 };

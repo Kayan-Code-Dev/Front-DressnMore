@@ -8,12 +8,12 @@ import { isModuleLive } from "@/config/feature-flags";
 import { mockTenantLogin } from "@/features/auth/services/auth.mock.service";
 import { tenantLogin } from "@/features/auth/services/auth.api.service";
 import { sessionStore } from "@/shared/lib/auth/session.store";
+import { readTenantSlug } from "@/shared/lib/auth/tenant-slug";
 import { isApiError, getFieldError, getValidationErrors } from "@/shared/types/api";
 import type { ValidationErrors } from "@/shared/types/api";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [workspace, setWorkspace] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,7 +27,7 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      const payload = { workspace, email, password };
+      const payload = { email, password };
       const response = isModuleLive("auth")
         ? await tenantLogin(payload)
         : await mockTenantLogin(payload);
@@ -41,15 +41,23 @@ export function LoginPage() {
         return;
       }
 
+      const tenantSlug = readTenantSlug(response.data.tenant, null);
+
       sessionStore.setSession({
         token: response.data.token,
-        workspace: response.data.tenant.slug,
+        workspace: tenantSlug,
         tenant: response.data.tenant,
         user: response.data.user,
         permissions: response.data.permissions,
-        plan: response.data.plan,
+        subscription: response.data.subscription,
       });
-      navigate("/dashboard", { replace: true });
+
+      const destination =
+        response.data.subscription?.lifecycle_status === "expired"
+          ? "/settings/subscription"
+          : "/dashboard";
+
+      navigate(destination, { replace: true });
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Login failed");
     } finally {
@@ -61,15 +69,6 @@ export function LoginPage() {
     <div className="auth-page">
       <form className="auth-card" onSubmit={onSubmit}>
         <h1>DressnMore Login</h1>
-
-        <FormField htmlFor="workspace" label="Workspace" error={getFieldError(fieldErrors, "workspace")}>
-          <Input
-            id="workspace"
-            value={workspace}
-            onChange={(event) => setWorkspace(event.target.value)}
-            required
-          />
-        </FormField>
 
         <FormField htmlFor="email" label="Email" error={getFieldError(fieldErrors, "email")}>
           <Input

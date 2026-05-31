@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { isModuleLive } from "@/config/feature-flags";
 import { fetchMe } from "@/features/auth/services/auth.api.service";
 import { sessionStore } from "@/shared/lib/auth/session.store";
+import { readTenantSlug } from "@/shared/lib/auth/tenant-slug";
 import { isApiError } from "@/shared/types/api";
 
 export function useSessionRestore(): { restoring: boolean } {
@@ -25,11 +26,11 @@ export function useSessionRestore(): { restoring: boolean } {
         const session = sessionStore.getState();
         sessionStore.setSession({
           token: session.token,
-          workspace: response.data.tenant.slug,
+          workspace: readTenantSlug(response.data.tenant, session.workspace),
           tenant: response.data.tenant,
           user: response.data.user,
           permissions: response.data.permissions,
-          plan: response.data.plan,
+          subscription: response.data.subscription ?? session.subscription,
         });
       }
 
