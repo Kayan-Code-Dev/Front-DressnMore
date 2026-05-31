@@ -1,4 +1,4 @@
-import type { ApiSuccess } from "@/shared/types/api";
+import type { ApiSuccess, ListQueryParams, PaginatedResponse } from "@/shared/types/api";
 import type {
   TailoringDelivery,
   TailoringMeasurement,
@@ -13,7 +13,7 @@ import {
 } from "@/features/tailoring/mocks/tailoring.mock";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const PER_PAGE = 10;
+const PER_PAGE = 15;
 
 function paginate<T>(items: T[], page = 1, perPage = PER_PAGE) {
   const total = items.length;
@@ -22,23 +22,38 @@ function paginate<T>(items: T[], page = 1, perPage = PER_PAGE) {
   return { data: items.slice(start, start + perPage), meta: { total, last_page, current_page: page, per_page: perPage } };
 }
 
-export async function listTailoringOrdersMock(
-  search = "",
-  page = 1,
-  filters: TailoringFilterParams = {},
-): Promise<ApiSuccess<TailoringOrder[]>> {
-  await delay(250);
+function filterOrders(items: TailoringOrder[], search = "", filters: TailoringFilterParams = {}) {
   const normalized = search.trim().toLowerCase();
-  let data = tailoringOrdersFixture.filter((order) => {
-    if (normalized && !order.client_name.toLowerCase().includes(normalized) && !String(order.id).includes(normalized)) {
-      return false;
+
+  return items.filter((order) => {
+    if (normalized) {
+      const haystack = [
+        order.client_name,
+        order.order_number,
+        order.garment_name,
+        order.fabric_name,
+        String(order.id),
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (!haystack.includes(normalized)) return false;
     }
-    if (filters.status && order.status !== filters.status) return false;
-    if (filters.stage && order.current_stage !== filters.stage) return false;
-    if (filters.priority && order.priority !== filters.priority) return false;
+    if (filters.status && filters.status !== "all" && order.status !== filters.status) return false;
+    if (filters.stage && filters.stage !== "all" && order.current_stage !== filters.stage) return false;
+    if (filters.priority && filters.priority !== "all" && order.priority !== filters.priority) return false;
     return true;
   });
-  const { data: pageData, meta } = paginate(data, page);
+}
+
+export async function listTailoringOrdersMock(
+  params: ListQueryParams<TailoringFilterParams> = {},
+): Promise<PaginatedResponse<TailoringOrder>> {
+  await delay(250);
+  const search = params.search ?? "";
+  const page = params.page ?? 1;
+  const perPage = params.per_page ?? PER_PAGE;
+  const data = filterOrders(tailoringOrdersFixture, search, params);
+  const { data: pageData, meta } = paginate(data, page, perPage);
   return { success: true, message: "Success", data: pageData, meta };
 }
 
@@ -80,4 +95,8 @@ export async function updateMeasurementsMock(
   const order = tailoringOrdersFixture.find((o) => o.id === orderId);
   if (order) order.measurements = measurements;
   return { success: true, message: "تم حفظ القياسات بنجاح", data: order ?? null };
+}
+
+export function getAllTailoringOrdersMock(): TailoringOrder[] {
+  return tailoringOrdersFixture;
 }

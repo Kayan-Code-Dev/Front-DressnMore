@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { isModuleLive } from "@/config/feature-flags";
-import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import {
   getTailoringStatsMock,
   listTailoringOrdersMock,
@@ -10,130 +9,70 @@ import {
   getTailoringStats,
   listTailoringOrders,
 } from "@/features/tailoring/services/tailoring.api.service";
-import type { TailoringOrder, TailoringOrderStats, TailoringOrderStatus } from "@/features/tailoring/types/tailoring.types";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import type {
+  TailoringFilterParams,
+  TailoringOrder,
+  TailoringOrderStats,
+  TailoringOrderStatus,
+} from "@/features/tailoring/types/tailoring.types";
+import { getReadyOrders, getUrgentOrders } from "@/features/tailoring/mocks/tailoring.mock";
+import { TailoringStatsSection } from "@/features/tailoring/components/tailoring-stats-section";
+import { TailoringFiltersBar } from "@/features/tailoring/components/tailoring-filters-bar";
+import { TailoringKanbanBoard } from "@/features/tailoring/components/tailoring-kanban-board";
+import { priorityMap, statusMap } from "@/features/tailoring/constants/tailoring.constants";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatNumber } from "@/shared/lib/format/numbers";
 import {
   Scissors,
-  Search,
   Plus,
-  Filter,
+  FileText,
+  Eye,
   ChevronLeft,
   ChevronRight,
-  Eye,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
 } from "lucide-react";
-
-const statusMap: Record<TailoringOrderStatus, { label: string; variant: "success" | "warning" | "destructive" | "info" }> = {
-  active: { label: "نشط", variant: "success" },
-  completed: { label: "منجز", variant: "info" },
-  overdue: { label: "متأخر", variant: "destructive" },
-  cancelled: { label: "ملغي", variant: "warning" },
-};
-
-const stageLabels: Record<string, string> = {
-  measurements: "القياسات",
-  cutting: "القص",
-  sewing: "الخياطة",
-  finishing: "التشطيب",
-  ready_for_delivery: "جاهز للتسليم",
-};
-
-const priorityLabels: Record<string, { label: string; variant: "info" | "destructive" | "secondary" }> = {
-  VIP: { label: "VIP", variant: "info" },
-  urgent: { label: "عاجل", variant: "destructive" },
-  normal: { label: "عادي", variant: "secondary" },
-};
-
-function StatCard({
-  label,
-  value,
-  sub,
-  icon: Icon,
-  gradient,
-}: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  icon: React.ComponentType<{ className?: string }>;
-  gradient: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="pt-5 pb-4">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">{label}</p>
-            <p className="text-xl font-black" style={{ color: "var(--color-text-primary)" }}>{value}</p>
-            {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
-          </div>
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: gradient }}>
-            <Icon className="w-4 h-4 text-white" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function TableSkeletonRows({ rows = 5, cols = 9 }: { rows?: number; cols?: number }) {
-  return (
-    <>
-      {Array.from({ length: rows }).map((_, i) => (
-        <TableRow key={i}>
-          {Array.from({ length: cols }).map((__, j) => (
-            <TableCell key={j} className="text-center"><Skeleton className="h-5 w-full max-w-[90px] mx-auto" /></TableCell>
-          ))}
-        </TableRow>
-      ))}
-    </>
-  );
-}
 
 export function TailoringOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<TailoringFilterParams>({ status: "all", priority: "all", stage: "all" });
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [rows, setRows] = useState<TailoringOrder[]>([]);
   const [stats, setStats] = useState<TailoringOrderStats | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadStats = isModuleLive("tailoring") ? getTailoringStats : getTailoringStatsMock;
+    const loadStats = isModuleLive("tailoring") ? getTailoringStats : () => getTailoringStatsMock().then((r) => r.data);
     loadStats()
-      .then((res) => setStats("data" in res ? res.data : res))
+      .then(setStats)
+      .catch((e: Error) => setError(e.message))
       .finally(() => setStatsLoading(false));
   }, []);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setError(null);
+
+    const params = {
+      search,
+      page: viewMode === "kanban" ? 1 : page,
+      per_page: viewMode === "kanban" ? 100 : 15,
+      status: filters.status !== "all" ? filters.status : undefined,
+      stage: filters.stage !== "all" ? filters.stage : undefined,
+      priority: filters.priority !== "all" ? filters.priority : undefined,
+    };
+
     const loadOrders = isModuleLive("tailoring")
-      ? () => listTailoringOrders({ search, page, per_page: 15 })
-      : () => listTailoringOrdersMock(search, page);
+      ? () => listTailoringOrders(params)
+      : () => listTailoringOrdersMock(params);
 
     loadOrders()
       .then((response) => {
@@ -143,121 +82,140 @@ export function TailoringOrdersPage() {
         setTotalPages(meta?.last_page ?? 1);
         setTotal(meta?.total ?? response.data.length);
       })
+      .catch((e: Error) => { if (!cancelled) setError(e.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [search, page]);
 
-  const columns = useMemo(
-    () => [
-      { key: "id", title: "#" },
-      { key: "client", title: "العميل" },
-      { key: "fabric", title: "القماش" },
-      { key: "due_date", title: "موعد التسليم" },
-      { key: "stage", title: "المرحلة" },
-      { key: "priority", title: "الأولوية" },
-      { key: "total", title: "الإجمالي" },
-      { key: "status", title: "الحالة" },
-      { key: "actions", title: "إجراءات" },
-    ],
-    [],
+    return () => { cancelled = true; };
+  }, [search, page, filters, viewMode]);
+
+  const urgentOrders = useMemo(() => getUrgentOrders(rows), [rows]);
+  const readyOrders = useMemo(
+    () =>
+      getReadyOrders(rows).map((o) => ({
+        id: o.id,
+        client_name: o.client_name,
+        garment_name: o.garment_name,
+        total_price: o.total_price,
+        whatsapp: o.customer?.whatsapp,
+      })),
+    [rows],
   );
 
   return (
-    <div className="w-full space-y-4" dir="rtl">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statsLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}><CardContent className="pt-5"><Skeleton className="h-16 w-full" /></CardContent></Card>
-          ))
-        ) : stats ? (
-          <>
-            <StatCard label="إجمالي الأوامر" value={stats.total} sub={`${stats.active} نشطة`} icon={Scissors} gradient="linear-gradient(135deg, #BE185D, #F472B6)" />
-            <StatCard label="أوامر نشطة" value={stats.active} sub="قيد التنفيذ" icon={Clock} gradient="linear-gradient(135deg, #059669, #34D399)" />
-            <StatCard label="متأخر" value={stats.overdue} sub="تحتاج متابعة" icon={AlertTriangle} gradient="linear-gradient(135deg, #DC2626, #F87171)" />
-            <StatCard label="جاهز للتسليم" value={stats.ready} sub={`${stats.revenue} ج.م إيرادات`} icon={CheckCircle} gradient="linear-gradient(135deg, #7C3AED, #A78BFA)" />
-          </>
-        ) : null}
+    <div className="w-full space-y-5" dir="rtl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: "linear-gradient(135deg, #BE185D, #F472B6)", boxShadow: "0 4px 14px rgba(190,24,93,0.25)" }}
+          >
+            <Scissors className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black" style={{ color: "var(--color-text-primary)" }}>قسم التفصيل</h1>
+            <p className="text-sm text-muted-foreground">إدارة أوامر التفصيل — القياسات — الأقمشة — مراحل الإنتاج</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" asChild>
+            <Link to="/reports/tailoring"><FileText className="h-4 w-4 ml-1.5" />تقرير التفصيل</Link>
+          </Button>
+          <Button disabled style={{ background: "linear-gradient(135deg, #1E293B, #334155)" }} className="text-white border-0">
+            <Plus className="h-4 w-4 ml-1.5" />أمر تفصيل جديد
+          </Button>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #BE185D, #F472B6)" }}>
-              <Scissors className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-lg font-black" style={{ color: "var(--color-text-primary)" }}>أوامر التفصيل</CardTitle>
-              <CardDescription>إدارة ومتابعة أوامر التفصيل والقياسات.</CardDescription>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" onClick={() => setFiltersOpen((v) => !v)}><Filter className="h-4 w-4 ml-1.5" />الفلاتر</Button>
-            <Button disabled><Plus className="h-4 w-4 ml-1.5" />أمر تفصيل جديد</Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="relative max-w-sm mb-4">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input value={search} onChange={(e) => { setLoading(true); setSearch(e.target.value); setPage(1); }} placeholder="بحث برقم الأمر أو اسم العميل..." className="pr-9" />
-          </div>
-          <ListPageStandardFilters open={filtersOpen} />
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+      )}
 
-          <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--color-border)" }}>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/30">
-                  {columns.map((col) => (<TableHead key={col.key} className="text-center font-bold text-xs">{col.title}</TableHead>))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableSkeletonRows rows={5} cols={columns.length} />
-                ) : rows.length > 0 ? (
-                  rows.map((row) => {
-                    const statusCfg = statusMap[row.status];
-                    const priorityCfg = priorityLabels[row.priority];
-                    return (
+      <TailoringStatsSection
+        stats={stats}
+        loading={statsLoading}
+        urgentOrders={urgentOrders}
+        readyOrders={readyOrders}
+      />
+
+      <TailoringFiltersBar
+        search={search}
+        onSearchChange={(v) => { setSearch(v); setPage(1); }}
+        filters={filters}
+        onFiltersChange={(f) => { setFilters(f); setPage(1); }}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        resultCount={total}
+      />
+
+      {viewMode === "kanban" ? (
+        loading ? (
+          <div className="flex gap-4 overflow-hidden">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="w-[280px] h-64 shrink-0 rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <TailoringKanbanBoard orders={rows} />
+        )
+      ) : (
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-0">
+            <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-border)" }}>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    {["#", "العميل", "الثوب", "المرحلة", "الأولوية", "موعد التسليم", "الإجمالي", "الحالة", ""].map((h) => (
+                      <TableHead key={h} className="text-center font-bold text-xs">{h}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        {Array.from({ length: 9 }).map((__, j) => (
+                          <TableCell key={j}><Skeleton className="h-5 w-full max-w-[80px] mx-auto" /></TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : rows.length === 0 ? (
+                    <TableRow><TableCell colSpan={9} className="py-12 text-center text-muted-foreground">لا توجد أوامر</TableCell></TableRow>
+                  ) : (
+                    rows.map((row) => (
                       <TableRow key={row.id}>
-                        <TableCell className="text-center"><Badge variant="outline" className="font-mono">{row.id}</Badge></TableCell>
+                        <TableCell className="text-center"><Badge variant="outline" className="font-mono text-blue-600">{row.order_number}</Badge></TableCell>
                         <TableCell className="text-center">
                           <div className="font-medium">{row.client_name}</div>
                           <div className="text-xs text-muted-foreground" dir="ltr">{row.client_phone}</div>
                         </TableCell>
+                        <TableCell className="text-center text-sm">{row.garment_name}</TableCell>
+                        <TableCell className="text-center text-xs">{row.current_stage}</TableCell>
+                        <TableCell className="text-center"><Badge variant={priorityMap[row.priority].variant}>{priorityMap[row.priority].label}</Badge></TableCell>
+                        <TableCell className="text-center text-xs text-muted-foreground">{row.due_date}</TableCell>
+                        <TableCell className="text-center font-bold">{formatNumber(row.total_price)} ج.م</TableCell>
+                        <TableCell className="text-center"><Badge variant={statusMap[row.status as TailoringOrderStatus].variant}>{statusMap[row.status as TailoringOrderStatus].label}</Badge></TableCell>
                         <TableCell className="text-center">
-                          <div>{row.fabric_name}</div>
-                          <Badge variant="outline" className="font-mono text-xs mt-0.5">{row.fabric_code}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center text-muted-foreground text-xs">{row.due_date}</TableCell>
-                        <TableCell className="text-center text-sm">{stageLabels[row.current_stage] ?? row.current_stage}</TableCell>
-                        <TableCell className="text-center"><Badge variant={priorityCfg.variant}>{priorityCfg.label}</Badge></TableCell>
-                        <TableCell className="text-center font-medium">{row.total_price} ج.م</TableCell>
-                        <TableCell className="text-center"><Badge variant={statusCfg.variant}>{statusCfg.label}</Badge></TableCell>
-                        <TableCell className="text-center">
-                          <Button variant="ghost" size="icon" asChild title="عرض">
-                            <Link to={`/tailoring/orders/${row.id}`}><Eye className="h-4 w-4" /></Link>
-                          </Button>
+                          <Button variant="ghost" size="icon" asChild><Link to={`/tailoring/orders/${row.id}`}><Eye className="h-4 w-4" /></Link></Button>
                         </TableCell>
                       </TableRow>
-                    );
-                  })
-                ) : (
-                  <TableRow><TableCell colSpan={columns.length} className="py-10 text-center text-muted-foreground">لا توجد أوامر تفصيل.</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-        <CardFooter className="flex items-center justify-between flex-wrap gap-3">
-          <p className="text-sm text-muted-foreground">إجمالي الأوامر: <span className="font-bold">{total}</span></p>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => { setLoading(true); setPage(page - 1); }}><ChevronRight className="h-4 w-4" /> السابق</Button>
-              <span className="text-sm text-muted-foreground px-2">{page} / {totalPages}</span>
-              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => { setLoading(true); setPage(page + 1); }}>التالي <ChevronLeft className="h-4 w-4" /></Button>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
+          </CardContent>
+          {totalPages > 1 && (
+            <CardFooter className="flex items-center justify-between flex-wrap gap-3 pt-4">
+              <p className="text-sm text-muted-foreground">إجمالي: <span className="font-bold">{total}</span></p>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}><ChevronRight className="h-4 w-4" /> السابق</Button>
+                <span className="text-sm text-muted-foreground px-2">{page} / {totalPages}</span>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>التالي <ChevronLeft className="h-4 w-4" /></Button>
+              </div>
+            </CardFooter>
           )}
-        </CardFooter>
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }

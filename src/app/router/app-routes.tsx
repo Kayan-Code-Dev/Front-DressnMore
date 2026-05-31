@@ -120,6 +120,7 @@ export function AppRoutes() {
         <Route path="/sales/create" element={<CreateSalePage />} />
         <Route path="/sales/reports" element={<SalesReportsFullPage />} />
 
+        <Route path="/tailoring" element={<Navigate to="/tailoring/orders" replace />} />
         <Route path="/tailoring/orders" element={<TailoringOrdersPage />} />
         <Route path="/tailoring/deliveries" element={<TailoringDeliveriesPage />} />
         <Route path="/tailoring/orders/:id" element={<TailoringOrderDetailsPage />} />
