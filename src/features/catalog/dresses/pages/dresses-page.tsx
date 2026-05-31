@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
 import { isModuleLive } from "@/config/feature-flags";
 import type { DressItem, DressStatus } from "@/features/catalog/dresses/types/dresses.types";
+import { dressDisplayName } from "@/features/catalog/dresses/lib/dress-display";
 import { listDressesMock } from "@/features/catalog/dresses/services/dresses.mock.service";
 import {
   createDress,
@@ -12,8 +13,7 @@ import {
 } from "@/features/catalog/dresses/services/dresses.api.service";
 import { listDressCategories } from "@/features/catalog/categories/services/categories.api.service";
 import type { CategoryItem } from "@/features/catalog/categories/types/categories.types";
-import { listBranches } from "@/features/branches/services/branches.api.service";
-import type { BranchItem } from "@/features/branches/types/branches.types";
+import { formatInteger, toWesternDigits } from "@/shared/lib/format/numbers";
 import {
   Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter,
 } from "@/components/ui/card";
@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -51,17 +52,17 @@ function fetchDressData(searchTerm: string, currentPage: number) {
 
 type DressForm = {
   code: string;
-  name: string;
   dress_category_id: string;
-  branch_id: string;
+  dress_subcategory_id: string;
+  description: string;
   status: DressStatus;
 };
 
 const emptyForm = (): DressForm => ({
   code: "",
-  name: "",
   dress_category_id: "",
-  branch_id: "",
+  dress_subcategory_id: "",
+  description: "",
   status: "available",
 });
 
@@ -80,7 +81,7 @@ function StatusBadge({ status }: { status: string }) {
   return <Badge variant={config.variant}>{config.label}</Badge>;
 }
 
-function TableSkeletonRows({ rows = 5, cols = 5 }: { rows?: number; cols?: number }) {
+function TableSkeletonRows({ rows = 5, cols = 6 }: { rows?: number; cols?: number }) {
   return (
     <>
       {Array.from({ length: rows }).map((_, i) => (
@@ -112,32 +113,29 @@ export function DressesPage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [categoryOptions, setCategoryOptions] = useState<CategoryItem[]>([]);
-  const [branchOptions, setBranchOptions] = useState<BranchItem[]>([]);
+  const [subcategoryOptions, setSubcategoryOptions] = useState<CategoryItem[]>([]);
 
   useEffect(() => {
     if (!isModuleLive("dresses")) return;
-
-    let cancelled = false;
-    Promise.all([
-      listDressCategories({ only_parents: true, per_page: 100 }),
-      listBranches({ per_page: 100 }),
-    ])
-      .then(([catRes, branchRes]) => {
-        if (cancelled) return;
-        setCategoryOptions(catRes.data);
-        setBranchOptions(branchRes.data);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setCategoryOptions([]);
-          setBranchOptions([]);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    listDressCategories({ only_parents: true, per_page: 100 })
+      .then((res) => setCategoryOptions(res.data))
+      .catch(() => setCategoryOptions([]));
   }, []);
+
+  useEffect(() => {
+    if (!form.dress_category_id) {
+      setSubcategoryOptions([]);
+      return;
+    }
+
+    listDressCategories({
+      only_children: true,
+      parent_id: Number(form.dress_category_id),
+      per_page: 100,
+    })
+      .then((res) => setSubcategoryOptions(res.data))
+      .catch(() => setSubcategoryOptions([]));
+  }, [form.dress_category_id]);
 
   const loadRows = useCallback(() => {
     setLoading(true);
@@ -171,9 +169,9 @@ export function DressesPage() {
     setSelected(row);
     setForm({
       code: row.code,
-      name: row.name,
       dress_category_id: row.dress_category_id != null ? String(row.dress_category_id) : "",
-      branch_id: row.branch_id != null ? String(row.branch_id) : "",
+      dress_subcategory_id: row.dress_subcategory_id != null ? String(row.dress_subcategory_id) : "",
+      description: row.description ?? "",
       status: row.status,
     });
     setFormError(null);
@@ -194,10 +192,10 @@ export function DressesPage() {
   };
 
   const toPayload = () => ({
-    code: form.code.trim(),
-    name: form.name.trim(),
-    dress_category_id: form.dress_category_id ? Number(form.dress_category_id) : null,
-    branch_id: form.branch_id ? Number(form.branch_id) : null,
+    code: toWesternDigits(form.code.trim()),
+    dress_category_id: Number(form.dress_category_id),
+    dress_subcategory_id: Number(form.dress_subcategory_id),
+    description: form.description.trim() || null,
     status: form.status,
   });
 
@@ -238,13 +236,22 @@ export function DressesPage() {
     }
   };
 
+  const previewName = useMemo(() => {
+    const category = categoryOptions.find((c) => String(c.id) === form.dress_category_id);
+    const subcategory = subcategoryOptions.find((c) => String(c.id) === form.dress_subcategory_id);
+    return dressDisplayName({
+      code: toWesternDigits(form.code.trim()),
+      category: category ? { id: category.id, name: category.name } : null,
+      subcategory: subcategory ? { id: subcategory.id, name: subcategory.name } : null,
+    });
+  }, [form, categoryOptions, subcategoryOptions]);
+
   const columns = useMemo(
     () => [
       { key: "id", title: "#" },
-      { key: "code", title: "الكود" },
-      { key: "name", title: "الفستان" },
+      { key: "display_name", title: "المنتج" },
       { key: "category", title: "القسم" },
-      { key: "branch", title: "الفرع" },
+      { key: "subcategory", title: "القسم الفرعي" },
       { key: "status", title: "الحالة" },
       { key: "actions", title: "إجراءات" },
     ],
@@ -259,15 +266,8 @@ export function DressesPage() {
           value={form.code}
           onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))}
           placeholder="DRS-001"
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>الاسم</Label>
-        <Input
-          value={form.name}
-          onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-          placeholder="اسم الفستان"
+          className="font-mono"
+          dir="ltr"
           required
         />
       </div>
@@ -276,59 +276,64 @@ export function DressesPage() {
         <Select
           value={form.dress_category_id || "__none__"}
           onValueChange={(v) =>
-            setForm((p) => ({ ...p, dress_category_id: v === "__none__" ? "" : v }))
+            setForm((p) => ({
+              ...p,
+              dress_category_id: v === "__none__" ? "" : v,
+              dress_subcategory_id: "",
+            }))
           }
         >
-          <SelectTrigger>
-            <SelectValue placeholder="اختر القسم" />
-          </SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="اختر القسم" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="__none__">— بدون قسم —</SelectItem>
+            <SelectItem value="__none__">— اختر القسم —</SelectItem>
             {categoryOptions.map((cat) => (
-              <SelectItem key={cat.id} value={String(cat.id)}>
-                {cat.name}
-              </SelectItem>
+              <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
       <div className="space-y-2">
-        <Label>الفرع</Label>
+        <Label>القسم الفرعي</Label>
         <Select
-          value={form.branch_id || "__none__"}
-          onValueChange={(v) => setForm((p) => ({ ...p, branch_id: v === "__none__" ? "" : v }))}
+          value={form.dress_subcategory_id || "__none__"}
+          onValueChange={(v) =>
+            setForm((p) => ({ ...p, dress_subcategory_id: v === "__none__" ? "" : v }))
+          }
+          disabled={!form.dress_category_id}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="اختر الفرع" />
-          </SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="اختر القسم الفرعي" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="__none__">— بدون فرع —</SelectItem>
-            {branchOptions.map((branch) => (
-              <SelectItem key={branch.id} value={String(branch.id)}>
-                {branch.name}
-              </SelectItem>
+            <SelectItem value="__none__">— اختر القسم الفرعي —</SelectItem>
+            {subcategoryOptions.map((sub) => (
+              <SelectItem key={sub.id} value={String(sub.id)}>{sub.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+      </div>
+      <div className="space-y-2">
+        <Label>الوصف (اختياري)</Label>
+        <Textarea
+          value={form.description}
+          onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+          rows={2}
+        />
       </div>
       <div className="space-y-2">
         <Label>الحالة</Label>
-        <Select
-          value={form.status}
-          onValueChange={(v) => setForm((p) => ({ ...p, status: v as DressStatus }))}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
+        <Select value={form.status} onValueChange={(v) => setForm((p) => ({ ...p, status: v as DressStatus }))}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             {DRESS_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {statusMap[s]?.label ?? s}
-              </SelectItem>
+              <SelectItem key={s} value={s}>{statusMap[s]?.label ?? s}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
+      {previewName ? (
+        <p className="text-sm text-muted-foreground">
+          اسم العرض: <span className="font-mono font-medium text-foreground" dir="ltr">{previewName}</span>
+        </p>
+      ) : null}
       {formError ? <p className="text-sm text-destructive">{formError}</p> : null}
     </div>
   );
@@ -342,15 +347,15 @@ export function DressesPage() {
               <Shirt className="w-5 h-5 text-white" />
             </div>
             <div>
-              <CardTitle className="text-lg font-black" style={{ color: "var(--color-text-primary)" }}>إدارة الفساتين</CardTitle>
-              <CardDescription>عرض وتعديل وإدارة الفساتين في النظام.</CardDescription>
+              <CardTitle className="text-lg font-black" style={{ color: "var(--color-text-primary)" }}>إدارة المنتجات</CardTitle>
+              <CardDescription>الكود + القسم + القسم الفرعي — الاسم يُولَّد تلقائياً.</CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <Button variant="outline" onClick={() => setFiltersOpen((v) => !v)}><Filter className="h-4 w-4 ml-1.5" />الفلاتر</Button>
             <Button disabled={!isModuleLive("dresses")} onClick={openCreate}>
               <Plus className="h-4 w-4 ml-1.5" />
-              إنشاء فستان
+              إضافة منتج
             </Button>
           </div>
         </CardHeader>
@@ -358,15 +363,7 @@ export function DressesPage() {
           <div className="flex items-center gap-3 mb-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                placeholder="بحث عن فستان..."
-                className="pr-9"
-              />
+              <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="بحث عن منتج..." className="pr-9" />
             </div>
           </div>
           <ListPageStandardFilters open={filtersOpen} />
@@ -384,30 +381,19 @@ export function DressesPage() {
                   {loading ? (<TableSkeletonRows rows={5} cols={columns.length} />) : rows.length > 0 ? (
                     rows.map((row) => (
                       <TableRow key={row.id}>
-                        <TableCell className="text-center text-muted-foreground">{row.id}</TableCell>
-                        <TableCell className="text-center"><Badge variant="outline" className="font-mono">{row.code}</Badge></TableCell>
-                        <TableCell className="text-center font-medium">{row.name}</TableCell>
+                        <TableCell className="text-center text-muted-foreground">{formatInteger(row.id)}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="font-mono" dir="ltr">{dressDisplayName(row)}</Badge>
+                        </TableCell>
                         <TableCell className="text-center text-muted-foreground">{row.category?.name ?? "—"}</TableCell>
-                        <TableCell className="text-center text-muted-foreground">{row.branch?.name ?? "—"}</TableCell>
+                        <TableCell className="text-center text-muted-foreground">{row.subcategory?.name ?? "—"}</TableCell>
                         <TableCell className="text-center"><StatusBadge status={row.status} /></TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              disabled={!isModuleLive("dresses")}
-                              onClick={() => openEdit(row)}
-                            >
+                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!isModuleLive("dresses")} onClick={() => openEdit(row)}>
                               <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              disabled={!isModuleLive("dresses")}
-                              onClick={() => openDelete(row)}
-                            >
+                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!isModuleLive("dresses")} onClick={() => openDelete(row)}>
                               <Trash2 className="h-3.5 w-3.5 text-destructive" />
                             </Button>
                           </div>
@@ -415,7 +401,7 @@ export function DressesPage() {
                       </TableRow>
                     ))
                   ) : (
-                    <TableRow><TableCell colSpan={columns.length} className="py-10 text-center text-muted-foreground">لا توجد فساتين لعرضها.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={columns.length} className="py-10 text-center text-muted-foreground">لا توجد منتجات لعرضها.</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -423,11 +409,11 @@ export function DressesPage() {
           )}
         </CardContent>
         <CardFooter className="flex items-center justify-between flex-wrap gap-3">
-          <p className="text-sm text-muted-foreground">إجمالي الفساتين: <span className="font-bold">{total}</span></p>
+          <p className="text-sm text-muted-foreground">إجمالي المنتجات: <span className="font-bold">{formatInteger(total)}</span></p>
           {totalPages > 1 && (
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronRight className="h-4 w-4" />السابق</Button>
-              <span className="text-sm text-muted-foreground px-2">{page} / {totalPages}</span>
+              <span className="text-sm text-muted-foreground px-2">{formatInteger(page)} / {formatInteger(totalPages)}</span>
               <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>التالي<ChevronLeft className="h-4 w-4" /></Button>
             </div>
           )}
@@ -438,9 +424,9 @@ export function DressesPage() {
         <DialogContent className="sm:max-w-md" dir="rtl">
           <form onSubmit={handleSave}>
             <DialogHeader>
-              <DialogTitle>{dialog === "edit" ? "تعديل الفستان" : "إنشاء فستان جديد"}</DialogTitle>
+              <DialogTitle>{dialog === "edit" ? "تعديل المنتج" : "إضافة منتج جديد"}</DialogTitle>
               <DialogDescription>
-                {dialog === "edit" ? `تعديل: ${selected?.name ?? ""}` : "أدخل بيانات الفستان الجديد."}
+                {dialog === "edit" ? `تعديل: ${selected ? dressDisplayName(selected) : ""}` : "أدخل بيانات المنتج."}
               </DialogDescription>
             </DialogHeader>
             {formFields}
@@ -455,15 +441,13 @@ export function DressesPage() {
       <Dialog open={dialog === "delete"} onOpenChange={(open) => !open && closeDialog()}>
         <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>
-            <DialogTitle>حذف الفستان</DialogTitle>
-            <DialogDescription>هل أنت متأكد من حذف الفستان &quot;{selected?.name}&quot;؟</DialogDescription>
+            <DialogTitle>حذف المنتج</DialogTitle>
+            <DialogDescription>هل أنت متأكد من حذف &quot;{selected ? dressDisplayName(selected) : ""}&quot;؟</DialogDescription>
           </DialogHeader>
           {formError ? <p className="text-sm text-destructive">{formError}</p> : null}
           <DialogFooter>
             <Button variant="outline" disabled={saving} onClick={closeDialog}>إلغاء</Button>
-            <Button variant="destructive" disabled={saving} onClick={handleDelete}>
-              {saving ? "جاري الحذف..." : "حذف"}
-            </Button>
+            <Button variant="destructive" disabled={saving} onClick={handleDelete}>{saving ? "جاري الحذف..." : "حذف"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

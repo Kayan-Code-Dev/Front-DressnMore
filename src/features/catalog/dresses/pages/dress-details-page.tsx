@@ -12,12 +12,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Shirt, ArrowRight, ArrowLeftRight, Palette, Ruler } from "lucide-react";
+import { dressDisplayName } from "@/features/catalog/dresses/lib/dress-display";
+import { formatNumber } from "@/shared/lib/format/numbers";
+import { Shirt, ArrowRight, ArrowLeftRight } from "lucide-react";
 
 const statusMap: Record<string, { label: string; variant: "success" | "warning" | "destructive" | "info" }> = {
-  ready: { label: "جاهز", variant: "success" },
-  reserved: { label: "محجوز", variant: "warning" },
+  available: { label: "متاح", variant: "success" },
+  rented: { label: "مؤجر", variant: "warning" },
+  sold: { label: "مباع", variant: "info" },
   maintenance: { label: "صيانة", variant: "destructive" },
+  unavailable: { label: "غير متاح", variant: "destructive" },
 };
 
 const dressDetailExtras: Record<number, { color: string; size: string; rental_price: number; purchase_price: number; notes: string }> = {
@@ -110,7 +114,7 @@ export function DressDetailsPage() {
                   <Skeleton className="h-6 w-48 mb-1" />
                 ) : (
                   <>
-                    <CardTitle className="text-lg font-black">{dress?.name ?? "—"}</CardTitle>
+                    <CardTitle className="text-lg font-black" dir="ltr">{dress ? dressDisplayName(dress) : "—"}</CardTitle>
                     <CardDescription>
                       <Badge variant="outline" className="font-mono">{dress?.code}</Badge>
                     </CardDescription>
@@ -136,24 +140,13 @@ export function DressDetailsPage() {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   <DetailField label="القسم">{dress.category?.name ?? "—"}</DetailField>
-                  <DetailField label="الفرع">{dress.branch?.name ?? "—"}</DetailField>
-                  <DetailField label="اللون">
-                    <span className="flex items-center gap-1">
-                      <Palette className="h-3.5 w-3.5" />
-                      {extras?.color ?? "—"}
-                    </span>
-                  </DetailField>
-                  <DetailField label="المقاس">
-                    <span className="flex items-center gap-1">
-                      <Ruler className="h-3.5 w-3.5" />
-                      {extras?.size ?? "—"}
-                    </span>
-                  </DetailField>
+                  <DetailField label="القسم الفرعي">{dress.subcategory?.name ?? "—"}</DetailField>
+                  <DetailField label="الوصف">{dress.description ?? extras?.notes ?? "—"}</DetailField>
                   <DetailField label="سعر الإيجار">
-                    {extras ? `${extras.rental_price.toLocaleString()} ج.م` : "—"}
+                    {extras ? `${formatNumber(extras.rental_price)} ج.م` : "—"}
                   </DetailField>
                   <DetailField label="سعر الشراء">
-                    {extras ? `${extras.purchase_price.toLocaleString()} ج.م` : "—"}
+                    {extras ? `${formatNumber(extras.purchase_price)} ج.م` : "—"}
                   </DetailField>
                 </div>
                 {extras?.notes && (

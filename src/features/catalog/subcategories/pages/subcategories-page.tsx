@@ -47,6 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatInteger } from "@/shared/lib/format/numbers";
 import {
   Layers,
   Search,
@@ -65,15 +66,6 @@ function fetchSubcategoryData(searchTerm: string, currentPage: number) {
   return listSubcategoriesMock(searchTerm);
 }
 
-const statusMap: Record<string, { label: string; variant: "success" | "destructive" }> = {
-  active: { label: "نشط", variant: "success" },
-  inactive: { label: "غير نشط", variant: "destructive" },
-};
-
-function StatusBadge({ status }: { status: string }) {
-  const config = statusMap[status] ?? { label: status, variant: "destructive" };
-  return <Badge variant={config.variant}>{config.label}</Badge>;
-}
 
 function TableSkeletonRows({ rows = 5, cols = 6 }: { rows?: number; cols?: number }) {
   return (
@@ -104,7 +96,7 @@ export function SubcategoriesPage() {
   const [dialog, setDialog] = useState<null | "create" | "edit" | "delete">(null);
   const [selected, setSelected] = useState<SubcategoryItem | null>(null);
   const [parents, setParents] = useState<CategoryItem[]>([]);
-  const [form, setForm] = useState({ parent_id: "", name: "", description: "", status: "active" as "active" | "inactive" });
+  const [form, setForm] = useState({ parent_id: "", name: "" });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -138,7 +130,7 @@ export function SubcategoriesPage() {
 
   const openCreate = () => {
     setSelected(null);
-    setForm({ parent_id: "", name: "", description: "", status: "active" });
+    setForm({ parent_id: "", name: "" });
     setFormError(null);
     setDialog("create");
   };
@@ -148,8 +140,6 @@ export function SubcategoriesPage() {
     setForm({
       parent_id: row.parent_id ? String(row.parent_id) : "",
       name: row.name,
-      description: row.description ?? "",
-      status: row.status,
     });
     setFormError(null);
     setDialog("edit");
@@ -165,8 +155,6 @@ export function SubcategoriesPage() {
   const toPayload = () => ({
     parent_id: form.parent_id ? Number(form.parent_id) : null,
     name: form.name.trim(),
-    description: form.description.trim() || null,
-    status: form.status,
   });
 
   const handleSave = async (event: FormEvent) => {
@@ -206,8 +194,6 @@ export function SubcategoriesPage() {
       { key: "id", title: "#" },
       { key: "name", title: "الاسم" },
       { key: "category_name", title: "القسم الرئيسي" },
-      { key: "description", title: "الوصف" },
-      { key: "status", title: "الحالة" },
       { key: "actions", title: "إجراءات" },
     ],
     []
@@ -284,14 +270,10 @@ export function SubcategoriesPage() {
                   ) : rows.length > 0 ? (
                     rows.map((row) => (
                       <TableRow key={row.id}>
-                        <TableCell className="text-center text-muted-foreground">{row.id}</TableCell>
+                        <TableCell className="text-center text-muted-foreground">{formatInteger(row.id)}</TableCell>
                         <TableCell className="text-center font-medium">{row.name}</TableCell>
                         <TableCell className="text-center">
                           <Badge variant="outline">{row.parent?.name ?? row.category_name ?? "—"}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center text-muted-foreground">{row.description || "—"}</TableCell>
-                        <TableCell className="text-center">
-                          <StatusBadge status={row.status} />
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2 justify-center">
@@ -320,7 +302,7 @@ export function SubcategoriesPage() {
 
         <CardFooter className="flex items-center justify-between flex-wrap gap-3">
           <p className="text-sm text-muted-foreground">
-            إجمالي الأقسام الفرعية: <span className="font-bold">{total}</span>
+            إجمالي الأقسام الفرعية: <span className="font-bold">{formatInteger(total)}</span>
           </p>
           {totalPages > 1 && (
             <div className="flex items-center gap-2">
@@ -334,7 +316,7 @@ export function SubcategoriesPage() {
                 السابق
               </Button>
               <span className="text-sm text-muted-foreground px-2">
-                {page} / {totalPages}
+                {formatInteger(page)} / {formatInteger(totalPages)}
               </span>
               <Button
                 variant="outline"
@@ -370,20 +352,6 @@ export function SubcategoriesPage() {
               <div className="space-y-2">
                 <Label>الاسم</Label>
                 <Input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required />
-              </div>
-              <div className="space-y-2">
-                <Label>الوصف</Label>
-                <Input value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label>الحالة</Label>
-                <Select value={form.status} onValueChange={(v) => setForm((p) => ({ ...p, status: v as "active" | "inactive" }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">نشط</SelectItem>
-                    <SelectItem value="inactive">غير نشط</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
               {formError ? <p className="text-sm text-destructive">{formError}</p> : null}
             </div>

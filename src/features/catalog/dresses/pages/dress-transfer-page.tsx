@@ -31,6 +31,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { dressDisplayName } from "@/features/catalog/dresses/lib/dress-display";
 import { ArrowLeftRight, ArrowRight, Shirt, Loader2 } from "lucide-react";
 
 const branches = ["القاهرة", "الإسكندرية", "الجيزة", "المنصورة"];
@@ -104,17 +105,17 @@ export function DressTransferPage() {
               <div className="rounded-xl border p-4 flex items-center gap-3 bg-muted/20" style={{ borderColor: "var(--color-border)" }}>
                 <Shirt className="h-8 w-8 text-rose-500" />
                 <div>
-                  <p className="font-bold">{dress.name}</p>
+                  <p className="font-bold" dir="ltr">{dressDisplayName(dress)}</p>
                   <p className="text-sm text-muted-foreground">
                     <Badge variant="outline" className="font-mono ml-2">{dress.code}</Badge>
-                    الفرع الحالي: <span className="font-semibold">{dress.branch?.name ?? "—"}</span>
+                    {dress.category?.name ?? "—"} / {dress.subcategory?.name ?? "—"}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label>الفرع الحالي</Label>
-                <Input value={dress.branch?.name ?? ""} disabled />
+                <Input value="—" disabled />
               </div>
 
               <div className="space-y-2">
@@ -124,13 +125,11 @@ export function DressTransferPage() {
                     <SelectValue placeholder="اختر الفرع" />
                   </SelectTrigger>
                   <SelectContent>
-                    {branches
-                      .filter((b) => b !== dress.branch?.name)
-                      .map((branch) => (
-                        <SelectItem key={branch} value={branch}>
-                          {branch}
-                        </SelectItem>
-                      ))}
+                    {branches.map((branch) => (
+                      <SelectItem key={branch} value={branch}>
+                        {branch}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

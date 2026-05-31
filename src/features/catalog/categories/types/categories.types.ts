@@ -18,7 +18,4 @@ export type DressCategoryFilterParams = {
 export type CategoryPayload = {
   parent_id?: number | null;
   name: string;
-  slug?: string | null;
-  description?: string | null;
-  status?: "active" | "inactive";
 };
