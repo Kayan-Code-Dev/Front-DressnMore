@@ -62,7 +62,6 @@ export function LoginPage() {
       const destination = subscription?.lifecycle_status === "expired"
         ? "/settings/subscription"
         : "/dashboard";
-        : "/dashboard";
 
       navigate(destination, { replace: true });
     } catch (submitError) {
