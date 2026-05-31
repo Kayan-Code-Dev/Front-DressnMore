@@ -1,12 +1,17 @@
 export type CashMovementItem = {
   id: number;
-  cashbox: string;
-  type: "income" | "expense";
-  category: string;
+  type: string;
+  direction: "in" | "out";
   amount: number;
   balance_after: number;
-  reference: string;
-  created_at: string;
+  method: string | null;
+  cashbox_id: number | null;
+  reference: string | null;
+  movement_date: string | null;
+  description: string | null;
+  notes: string | null;
+  is_reversed: boolean;
+  created_at: string | null;
 };
 
 export type CashMovementFilterParams = {
@@ -16,4 +21,16 @@ export type CashMovementFilterParams = {
   direction?: string;
   date_from?: string;
   date_to?: string;
+};
+
+export type CashMovementPayload = {
+  type: "manual_adjustment" | "income" | "expense";
+  direction: "in" | "out";
+  amount: number;
+  method?: string | null;
+  cashbox_id?: number | null;
+  reference?: string | null;
+  movement_date?: string | null;
+  description?: string | null;
+  notes?: string | null;
 };

@@ -120,7 +120,7 @@ export function CashboxDetailsPage() {
               ) : (
                 <>
                   <CardTitle className="text-lg font-black">{cashbox?.name ?? "—"}</CardTitle>
-                  <CardDescription>{cashbox?.branch}</CardDescription>
+                  <CardDescription>{cashbox?.branch_id ? `فرع #${cashbox.branch_id}` : "—"}</CardDescription>
                 </>
               )}
             </div>
@@ -171,7 +171,7 @@ export function CashboxDetailsPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                <DetailField label="الفرع">{cashbox.branch}</DetailField>
+                <DetailField label="الفرع">{cashbox.branch_id ? `#${cashbox.branch_id}` : "—"}</DetailField>
                 <DetailField label="الوصف">{cashbox.description || "—"}</DetailField>
               </div>
             </>

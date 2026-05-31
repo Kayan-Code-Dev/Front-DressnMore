@@ -9,7 +9,7 @@ export async function listCashboxesMock(search = ""): Promise<ApiSuccess<Cashbox
   const normalized = search.trim().toLowerCase();
   const data = normalized
     ? cashboxesFixture.filter((item) =>
-        `${item.name} ${item.branch} ${item.description}`.toLowerCase().includes(normalized)
+        `${item.name} ${item.description ?? ""}`.toLowerCase().includes(normalized)
       )
     : cashboxesFixture;
 

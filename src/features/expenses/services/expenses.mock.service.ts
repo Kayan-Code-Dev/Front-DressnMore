@@ -9,7 +9,7 @@ export async function listExpensesMock(search = ""): Promise<ApiSuccess<ExpenseI
   const normalized = search.trim().toLowerCase();
   const data = normalized
     ? expensesFixture.filter((item) =>
-        `${item.branch} ${item.cashbox} ${item.category} ${item.vendor}`.toLowerCase().includes(normalized)
+        `${item.category?.name ?? ""} ${item.vendor ?? ""} ${item.description ?? ""}`.toLowerCase().includes(normalized)
       )
     : expensesFixture;
 

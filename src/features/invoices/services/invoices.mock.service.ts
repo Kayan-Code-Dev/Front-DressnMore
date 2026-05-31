@@ -9,7 +9,7 @@ export async function listInvoicesMock(search = ""): Promise<ApiSuccess<InvoiceI
   const normalized = search.trim().toLowerCase();
   const data = normalized
     ? invoicesFixture.filter((item) =>
-        `${item.invoice_number} ${item.customer_name} ${item.type} ${item.status}`
+        `${item.invoice_number} ${item.customer_id} ${item.type} ${item.status}`
           .toLowerCase()
           .includes(normalized)
       )

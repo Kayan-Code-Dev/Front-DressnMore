@@ -9,7 +9,7 @@ export async function listCashMovementsMock(search = ""): Promise<ApiSuccess<Cas
   const normalized = search.trim().toLowerCase();
   const data = normalized
     ? cashMovementsFixture.filter((item) =>
-        `${item.cashbox} ${item.type} ${item.category} ${item.reference}`.toLowerCase().includes(normalized)
+        `${item.type} ${item.reference ?? ""} ${item.description ?? ""}`.toLowerCase().includes(normalized)
       )
     : cashMovementsFixture;
 

@@ -1,14 +1,17 @@
 export type PaymentItem = {
   id: number;
-  customer: string;
-  branch: string;
+  invoice_id: number;
+  customer_id: number | null;
+  branch_id: number | null;
   amount: number;
   status: "pending" | "paid" | "cancelled";
   payment_type: "initial" | "normal" | "fee";
-  payment_date: string;
-  created_at: string;
-  notes: string;
-  order_number: string;
+  method: string | null;
+  reference: string | null;
+  paid_at: string | null;
+  cancelled_at: string | null;
+  notes: string | null;
+  created_at: string | null;
 };
 
 export type PaymentFilterParams = {
@@ -17,7 +20,7 @@ export type PaymentFilterParams = {
   branch_id?: number;
   method?: string;
   status?: string;
-  type?: string;
+  payment_type?: string;
   date_from?: string;
   date_to?: string;
 };
