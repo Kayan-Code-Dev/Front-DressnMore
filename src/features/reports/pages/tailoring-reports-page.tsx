@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { isModuleLive } from "@/config/feature-flags";
 import type { TailoringReportSummary } from "@/features/reports/types/reports.types";
 import { getTailoringReportMock } from "@/features/reports/services/reports.mock.service";
+import { getTailoringReport } from "@/features/reports/services/reports.api.service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -14,7 +16,8 @@ export function TailoringReportsPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
-    getTailoringReportMock().then((response) => setSummary(response.data));
+    const load = isModuleLive("reports") ? getTailoringReport : getTailoringReportMock;
+    load().then((response) => setSummary(response.data));
   }, []);
 
   return (

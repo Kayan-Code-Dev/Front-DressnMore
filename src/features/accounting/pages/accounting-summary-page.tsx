@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { ListPageStandardFilters } from "@/components/shared/ListPageStandardFilters";
+import { isModuleLive } from "@/config/feature-flags";
 import type { AccountingSummary, LedgerEntry } from "@/features/accounting/types/accounting.types";
 import { getAccountingSummaryMock, listLedgerMock } from "@/features/accounting/services/accounting.mock.service";
+import { getAccountingSummary, listLedger } from "@/features/accounting/services/accounting.api.service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -25,10 +27,17 @@ export function AccountingSummaryPage() {
   const handleSearchChange = (value: string) => { setLoading(true); setSearch(value); };
 
   useEffect(() => {
-    getAccountingSummaryMock().then((response) => setSummary(response.data));
+    const load = isModuleLive("accounting") ? getAccountingSummary : getAccountingSummaryMock;
+    load().then((response) => setSummary(response.data));
   }, []);
 
   useEffect(() => {
+    if (isModuleLive("accounting")) {
+      listLedger({ search })
+        .then((response) => setRows(response.data))
+        .finally(() => setLoading(false));
+      return;
+    }
     listLedgerMock(search)
       .then((response) => setRows(response.data))
       .finally(() => setLoading(false));

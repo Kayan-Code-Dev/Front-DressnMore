@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { isModuleLive } from "@/config/feature-flags";
 import type { SalesReportSummary } from "@/features/reports/types/reports.types";
 import { getSalesReportMock } from "@/features/reports/services/reports.mock.service";
+import { getSalesReport } from "@/features/reports/services/reports.api.service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -14,7 +16,8 @@ export function SalesReportsPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
-    getSalesReportMock().then((response) => setSummary(response.data));
+    const load = isModuleLive("reports") ? getSalesReport : getSalesReportMock;
+    load().then((response) => setSummary(response.data));
   }, []);
 
   return (

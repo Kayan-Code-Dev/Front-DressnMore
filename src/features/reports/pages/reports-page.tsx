@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { isModuleLive } from "@/config/feature-flags";
 import type { ReportsOverview } from "@/features/reports/types/reports.types";
 import { getReportsOverviewMock } from "@/features/reports/services/reports.mock.service";
+import { getReportsOverview } from "@/features/reports/services/reports.api.service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,7 +14,8 @@ export function ReportsPage() {
   const [data, setData] = useState<ReportsOverview | null>(null);
 
   useEffect(() => {
-    getReportsOverviewMock().then((response) => setData(response.data));
+    const load = isModuleLive("reports") ? getReportsOverview : getReportsOverviewMock;
+    load().then((response) => setData(response.data));
   }, []);
 
   return (

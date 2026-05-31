@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { isModuleLive } from "@/config/feature-flags";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { AccountProfile } from "@/features/settings/types/settings.types";
 import { getAccountSettingsMock } from "@/features/settings/services/settings.mock.service";
+import { getAccountProfile } from "@/features/settings/services/settings.api.service";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Settings, User, Lock, Trash2 } from "lucide-react";
@@ -14,7 +16,8 @@ export function AccountSettingsPage() {
   const [email, setEmail] = useState("");
 
   useEffect(() => {
-    getAccountSettingsMock().then((response) => {
+    const load = isModuleLive("settings") ? getAccountProfile : getAccountSettingsMock;
+    load().then((response) => {
       setProfile(response.data);
       setName(response.data.name);
       setEmail(response.data.email);
