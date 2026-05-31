@@ -3,18 +3,38 @@ import { tenantPath } from "@/config/api";
 import { buildQueryString } from "@/shared/lib/http/query";
 import type { ApiSuccess, ListQueryParams, PaginatedResponse } from "@/shared/types/api";
 import type {
+  CashboxDailySummary,
   CashboxFilterParams,
   CashboxItem,
   CashboxPayload,
   CashboxTransaction,
 } from "@/features/cashboxes/types/cashboxes.types";
 
+function toApiParams(params: ListQueryParams<CashboxFilterParams> = {}) {
+  const { status, is_active, ...rest } = params;
+  const mapped: Record<string, string | number | boolean | null | undefined> = { ...rest };
+
+  if (status === "active") mapped.is_active = true;
+  else if (status === "inactive") mapped.is_active = false;
+  else if (is_active !== undefined) mapped.is_active = is_active;
+
+  return mapped;
+}
+
 export async function listCashboxes(
   params: ListQueryParams<CashboxFilterParams> = {},
 ): Promise<PaginatedResponse<CashboxItem>> {
-  const qs = buildQueryString(params as Record<string, string | number | boolean | null | undefined>);
+  const qs = buildQueryString(toApiParams(params));
   const response = await httpClient.get<CashboxItem[]>(tenantPath(`/cashboxes${qs}`));
   return httpClient.unwrap(response) as PaginatedResponse<CashboxItem>;
+}
+
+export async function getCashboxDailySummary(
+  params: Pick<CashboxFilterParams, "branch_id"> & { cashbox_id?: number; date_from?: string; date_to?: string } = {},
+): Promise<ApiSuccess<CashboxDailySummary>> {
+  const qs = buildQueryString(params as Record<string, string | number | boolean | null | undefined>);
+  const response = await httpClient.get<CashboxDailySummary>(tenantPath(`/cashboxes/daily-summary${qs}`));
+  return httpClient.unwrap(response);
 }
 
 export async function createCashbox(payload: CashboxPayload): Promise<ApiSuccess<CashboxItem>> {
