@@ -6,6 +6,11 @@ export type CashMovementItem = {
   balance_after: number;
   method: string | null;
   cashbox_id: number | null;
+  branch_id?: number | null;
+  branch_name?: string | null;
+  category?: string | null;
+  party?: string | null;
+  status?: string | null;
   reference: string | null;
   movement_date: string | null;
   description: string | null;
