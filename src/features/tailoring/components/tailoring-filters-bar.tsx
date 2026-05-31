@@ -92,8 +92,8 @@ export function TailoringFiltersBar({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-muted-foreground ml-1">الأولوية:</span>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+        <span className="text-xs text-muted-foreground w-full sm:w-auto mb-1 sm:mb-0">الأولوية:</span>
         {priorityChips.map((chip) => (
           <button
             key={chip.key}
@@ -110,7 +110,7 @@ export function TailoringFiltersBar({
           </button>
         ))}
 
-        <span className="text-xs text-muted-foreground mr-3 ml-1">الحالة:</span>
+        <span className="text-xs text-muted-foreground w-full sm:w-auto sm:mr-3 mb-1 sm:mb-0">الحالة:</span>
         {statusChips.map((chip) => (
           <button
             key={chip.key}

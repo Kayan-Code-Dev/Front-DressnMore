@@ -24,7 +24,7 @@ interface ProjectTopBarProps {
 const quickAddItems = [
   { label: "فاتورة بيع", to: "/sales/create", icon: FileText, color: "#3B82F6" },
   { label: "فاتورة إيجار", to: "/orders/choose-client", icon: Key, color: "#F59E0B" },
-  { label: "أمر تفصيل", to: "/tailoring/orders", icon: Scissors, color: "#8B5CF6" },
+  { label: "أمر تفصيل", to: "/tailoring/orders/create", icon: Scissors, color: "#8B5CF6" },
   { label: "عميل جديد", to: "/customers", icon: UserPlus, color: "#10B981" },
   { label: "قيد مالي", to: "/cash-movements", icon: Coins, color: "#F97316" },
 ];

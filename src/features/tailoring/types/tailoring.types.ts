@@ -115,3 +115,17 @@ export type TailoringFilterParams = {
   priority?: TailoringPriority | "all";
   search?: string;
 };
+
+export type CreateTailoringOrderPayload = {
+  customer_id: number;
+  branch_id: number;
+  garment_name: string;
+  fabric_description?: string;
+  tailoring_due_date: string;
+  occasion_datetime?: string;
+  visit_datetime?: string;
+  unit_price: number;
+  paid_amount?: number;
+  order_notes?: string;
+  priority?: TailoringPriority;
+};

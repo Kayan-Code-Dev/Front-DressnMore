@@ -5,6 +5,7 @@ import type {
   TailoringOrder,
   TailoringOrderStats,
   TailoringFilterParams,
+  CreateTailoringOrderPayload,
 } from "@/features/tailoring/types/tailoring.types";
 import {
   computeTailoringStats,
@@ -99,4 +100,47 @@ export async function updateMeasurementsMock(
 
 export function getAllTailoringOrdersMock(): TailoringOrder[] {
   return tailoringOrdersFixture;
+}
+
+export async function createTailoringOrderMock(
+  payload: CreateTailoringOrderPayload,
+): Promise<ApiSuccess<{ id: number }>> {
+  await delay(350);
+  const nextId = Math.max(...tailoringOrdersFixture.map((o) => o.id), 0) + 1;
+  const orderNumber = `T${String(nextId).padStart(3, "0")}`;
+  const paid = payload.paid_amount ?? 0;
+  const total = payload.unit_price;
+
+  tailoringOrdersFixture.unshift({
+    id: nextId,
+    order_number: orderNumber,
+    client_name: `عميل #${payload.customer_id}`,
+    client_phone: "",
+    employee_name: "—",
+    branch_name: `فرع #${payload.branch_id}`,
+    garment_name: payload.garment_name,
+    fabric_name: payload.fabric_description ?? payload.garment_name,
+    fabric_code: "",
+    order_date: new Date().toISOString().slice(0, 10),
+    due_date: payload.tailoring_due_date,
+    occasion_date: payload.occasion_datetime,
+    visit_date: payload.visit_datetime,
+    status: "active",
+    priority: payload.priority ?? "normal",
+    payment_status: paid <= 0 ? "unpaid" : paid >= total ? "paid" : "partial",
+    current_stage: "new_order",
+    days_remaining: 30,
+    days_remaining_label: "30 يوم متبقي",
+    total_price: total,
+    paid,
+    remaining: Math.max(0, total - paid),
+    notes: payload.order_notes,
+    stages_completed: 1,
+    stages_total: 8,
+    progress_percent: 0,
+    payments_count: paid > 0 ? 1 : 0,
+    progress_log: [{ id: 1, stage: "new_order", stage_label: "طلب جديد", date: new Date().toLocaleDateString("en-GB").slice(0, 5), by: "النظام" }],
+  });
+
+  return { success: true, message: "تم إنشاء أمر التفصيل", data: { id: nextId } };
 }

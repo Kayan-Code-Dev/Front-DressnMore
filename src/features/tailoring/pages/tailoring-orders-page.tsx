@@ -19,6 +19,7 @@ import { getReadyOrders, getUrgentOrders } from "@/features/tailoring/mocks/tail
 import { TailoringStatsSection } from "@/features/tailoring/components/tailoring-stats-section";
 import { TailoringFiltersBar } from "@/features/tailoring/components/tailoring-filters-bar";
 import { TailoringKanbanBoard } from "@/features/tailoring/components/tailoring-kanban-board";
+import { TailoringOrderCard } from "@/features/tailoring/components/tailoring-order-card";
 import { priorityMap, statusMap } from "@/features/tailoring/constants/tailoring.constants";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -102,9 +103,9 @@ export function TailoringOrdersPage() {
   );
 
   return (
-    <div className="w-full space-y-5" dir="rtl">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+    <div className="w-full max-w-full space-y-5 overflow-x-hidden" dir="rtl">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3 min-w-0">
           <div
             className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
             style={{ background: "linear-gradient(135deg, #BE185D, #F472B6)", boxShadow: "0 4px 14px rgba(190,24,93,0.25)" }}
@@ -116,12 +117,12 @@ export function TailoringOrdersPage() {
             <p className="text-sm text-muted-foreground">إدارة أوامر التفصيل — القياسات — الأقمشة — مراحل الإنتاج</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" asChild>
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+          <Button variant="outline" className="flex-1 sm:flex-none" asChild>
             <Link to="/reports/tailoring"><FileText className="h-4 w-4 ml-1.5" />تقرير التفصيل</Link>
           </Button>
-          <Button disabled style={{ background: "linear-gradient(135deg, #1E293B, #334155)" }} className="text-white border-0">
-            <Plus className="h-4 w-4 ml-1.5" />أمر تفصيل جديد
+          <Button asChild className="flex-1 sm:flex-none text-white border-0" style={{ background: "linear-gradient(135deg, #1E293B, #334155)" }}>
+            <Link to="/tailoring/orders/create"><Plus className="h-4 w-4 ml-1.5" />أمر تفصيل جديد</Link>
           </Button>
         </div>
       </div>
@@ -149,18 +150,30 @@ export function TailoringOrdersPage() {
 
       {viewMode === "kanban" ? (
         loading ? (
-          <div className="flex gap-4 overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="w-[280px] h-64 shrink-0 rounded-xl" />
+              <Skeleton key={i} className="h-64 w-full rounded-xl" />
             ))}
           </div>
         ) : (
           <TailoringKanbanBoard orders={rows} />
         )
       ) : (
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-sm overflow-hidden">
           <CardContent className="p-0">
-            <div className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--color-border)" }}>
+            {/* Mobile: cards */}
+            <div className="md:hidden p-3 space-y-3">
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-36 w-full rounded-xl" />)
+              ) : rows.length === 0 ? (
+                <p className="py-10 text-center text-muted-foreground">لا توجد أوامر</p>
+              ) : (
+                rows.map((row) => <TailoringOrderCard key={row.id} order={row} />)
+              )}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden md:block rounded-xl overflow-hidden border mx-0" style={{ borderColor: "var(--color-border)" }}>
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30">

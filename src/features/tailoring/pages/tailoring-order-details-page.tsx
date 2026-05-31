@@ -87,7 +87,7 @@ export function TailoringOrderDetailsPage() {
   const remainingStages = (order.stages_total ?? 8) - completedStages;
 
   return (
-    <div className="w-full space-y-5" dir="rtl">
+    <div className="w-full max-w-full space-y-5 overflow-x-hidden" dir="rtl">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Link to="/tailoring/orders" className="hover:text-blue-600">قسم التفصيل</Link>
         <span>/</span>

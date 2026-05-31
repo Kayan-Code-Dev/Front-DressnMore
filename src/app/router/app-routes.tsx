@@ -49,6 +49,7 @@ import { SalesReportsFullPage } from "@/features/sales/pages/sales-reports-full-
 import { TailoringOrdersPage } from "@/features/tailoring/pages/tailoring-orders-page";
 import { TailoringDeliveriesPage } from "@/features/tailoring/pages/tailoring-deliveries-page";
 import { TailoringOrderDetailsPage } from "@/features/tailoring/pages/tailoring-order-details-page";
+import { CreateTailoringOrderPage } from "@/features/tailoring/pages/create-tailoring-order-page";
 import { EditMeasurementsPage } from "@/features/tailoring/pages/edit-measurements-page";
 import { EmployeesPage } from "@/features/employees/pages/employees-page";
 import { CreateEmployeePage } from "@/features/employees/pages/create-employee-page";
@@ -123,6 +124,7 @@ export function AppRoutes() {
         <Route path="/tailoring" element={<Navigate to="/tailoring/orders" replace />} />
         <Route path="/tailoring/orders" element={<TailoringOrdersPage />} />
         <Route path="/tailoring/deliveries" element={<TailoringDeliveriesPage />} />
+        <Route path="/tailoring/orders/create" element={<CreateTailoringOrderPage />} />
         <Route path="/tailoring/orders/:id" element={<TailoringOrderDetailsPage />} />
         <Route path="/tailoring/orders/:id/edit-measurements" element={<EditMeasurementsPage />} />
 
