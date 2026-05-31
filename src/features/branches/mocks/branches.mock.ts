@@ -1,0 +1,37 @@
+import type { BranchItem } from "@/features/branches/types/branches.types";
+
+export const branchesFixture: BranchItem[] = [
+  {
+    id: 1,
+    branch_code: "BR-001",
+    name: "Cairo Main",
+    phone: "+201000111222",
+    address: "Nasr City, Cairo",
+    inventory_name: "Main Inventory",
+    currency: "EGP",
+    vat: "14%",
+    status: "active",
+  },
+  {
+    id: 2,
+    branch_code: "BR-002",
+    name: "Alex Branch",
+    phone: "+201111222333",
+    address: "Smouha, Alexandria",
+    inventory_name: "Alex Inventory",
+    currency: "EGP",
+    vat: "14%",
+    status: "active",
+  },
+  {
+    id: 3,
+    branch_code: "BR-003",
+    name: "Mansoura Branch",
+    phone: "+201222333444",
+    address: "Downtown, Mansoura",
+    inventory_name: "Mansoura Inventory",
+    currency: "EGP",
+    vat: "14%",
+    status: "inactive",
+  },
+];
