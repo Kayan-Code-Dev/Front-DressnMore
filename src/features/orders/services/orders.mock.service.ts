@@ -27,17 +27,29 @@ export async function listRentalOrdersMock(
   search = "",
   page = 1,
   filters: OrderFilterParams = {},
+  perPage = PER_PAGE,
 ): Promise<ApiSuccess<RentalOrder[]>> {
   await delay(250);
   const normalized = search.trim().toLowerCase();
   let data = rentalOrdersFixture.filter((order) => {
-    if (normalized && !order.client_name.toLowerCase().includes(normalized) && !String(order.id).includes(normalized)) {
-      return false;
+    const customer = order.customer;
+    if (normalized) {
+      const haystack = [
+        order.client_name,
+        order.client_phone,
+        String(order.id),
+        order.invoice_number ?? "",
+        customer?.national_id ?? "",
+        customer?.whatsapp ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (!haystack.includes(normalized)) return false;
     }
     if (filters.status && order.status !== filters.status) return false;
     return true;
   });
-  const { data: pageData, meta } = paginate(data, page);
+  const { data: pageData, meta } = paginate(data, page, perPage);
   return { success: true, message: "Success", data: pageData, meta };
 }
 

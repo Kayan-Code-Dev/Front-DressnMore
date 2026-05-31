@@ -7,6 +7,8 @@ import type {
   EmployeeSalesRow,
   ProductSalesRow,
   SaleInvoice,
+  SaleInvoiceFilterParams,
+  SaleInvoiceStats,
   SalesReportSummary,
 } from "@/features/sales/types/sales.types";
 
@@ -35,12 +37,21 @@ export async function getEmployeeSales(): Promise<EmployeeSalesRow[]> {
 }
 
 export async function listSalesInvoices(
-  params: ListQueryParams = {},
+  params: ListQueryParams<SaleInvoiceFilterParams> = {},
 ): Promise<PaginatedResponse<SaleInvoice>> {
   const qs = buildQueryString(params as Record<string, string | number | boolean | null | undefined>);
   const response = await httpClient.get<SaleInvoice[]>(tenantPath(`/sales/invoices${qs}`));
   if (!response.success) throw new Error(response.message);
   return response as PaginatedResponse<SaleInvoice>;
+}
+
+export async function getSaleInvoiceStats(
+  params: SaleInvoiceFilterParams = {},
+): Promise<SaleInvoiceStats> {
+  const qs = buildQueryString(params as Record<string, string | number | boolean | null | undefined>);
+  const response = await httpClient.get<SaleInvoiceStats>(tenantPath(`/sales/invoices/stats${qs}`));
+  if (!response.success) throw new Error(response.message);
+  return response.data;
 }
 
 export async function createSale(payload: Record<string, unknown>): Promise<{ id: number }> {

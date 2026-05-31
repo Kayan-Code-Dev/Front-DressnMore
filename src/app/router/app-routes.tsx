@@ -44,6 +44,7 @@ import { ChooseDressesPage } from "@/features/orders/pages/choose-dresses-page";
 import { CreateOrderPage } from "@/features/orders/pages/create-order-page";
 import { DeliverySearchPage } from "@/features/orders/pages/delivery-search-page";
 import { CreateSalePage } from "@/features/sales/pages/create-sale-page";
+import { SalesInvoicesPage } from "@/features/sales/pages/sales-invoices-page";
 import { SalesReportsFullPage } from "@/features/sales/pages/sales-reports-full-page";
 import { TailoringOrdersPage } from "@/features/tailoring/pages/tailoring-orders-page";
 import { TailoringDeliveriesPage } from "@/features/tailoring/pages/tailoring-deliveries-page";
@@ -115,6 +116,7 @@ export function AppRoutes() {
         <Route path="/orders/create-order" element={<CreateOrderPage />} />
         <Route path="/orders/:id" element={<OrderDetailsPage />} />
 
+        <Route path="/sales/invoices" element={<SalesInvoicesPage />} />
         <Route path="/sales/create" element={<CreateSalePage />} />
         <Route path="/sales/reports" element={<SalesReportsFullPage />} />
 

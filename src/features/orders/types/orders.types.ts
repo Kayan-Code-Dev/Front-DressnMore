@@ -1,5 +1,20 @@
 export type RentalOrderStatus = "active" | "returned" | "overdue" | "cancelled" | "pending";
 
+export type RentalPaymentStatus = "paid" | "partially_paid" | "unpaid";
+
+export type RentalOrderCustomer = {
+  name: string;
+  national_id: string;
+  phone: string;
+  whatsapp: string;
+  address: string;
+};
+
+export type RentalOrderItemPreview = {
+  id: number;
+  name: string;
+};
+
 export type RentalOrderItem = {
   id: number;
   cloth_name: string;
@@ -28,17 +43,25 @@ export type OrderCustody = {
 
 export type RentalOrder = {
   id: number;
+  invoice_number?: string;
   client_name: string;
   client_phone: string;
+  customer?: RentalOrderCustomer;
   employee_name: string;
+  branch_name?: string;
+  invoice_date?: string;
   visit_date: string;
   delivery_date: string;
+  event_date?: string;
   return_date: string;
   total_price: number;
+  tax?: number;
   paid: number;
   remaining: number;
   status: RentalOrderStatus;
+  payment_status?: RentalPaymentStatus;
   items_count: number;
+  items_preview?: RentalOrderItemPreview[];
   items?: RentalOrderItem[];
   payments?: OrderPayment[];
   custodies?: OrderCustody[];
@@ -48,6 +71,7 @@ export type RentalOrder = {
 export type RentalOrderStats = {
   total: number;
   active: number;
+  returned: number;
   overdue: number;
   revenue: number;
   collected: number;
@@ -67,7 +91,7 @@ export type DeliverySearchRow = {
 };
 
 export type OrderFilterParams = {
-  status?: RentalOrderStatus;
+  status?: RentalOrderStatus | "";
   client_name?: string;
   date_from?: string;
   date_to?: string;
@@ -95,3 +119,5 @@ export type CreateOrderDraft = {
   notes?: string;
   items: DressOption[];
 };
+
+export type RentalStatusFilter = RentalOrderStatus | "all";
