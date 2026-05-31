@@ -44,7 +44,9 @@ export function LoginPage() {
         if (Object.keys(errors).length > 0) {
           setFieldErrors(errors);
         }
-        setLoginErrorMessage(response.message);
+        const emailError = getFieldError(errors, "email");
+        const passwordError = getFieldError(errors, "password");
+        setLoginErrorMessage(emailError || passwordError || response.message);
         setLoginError(true);
         return;
       }

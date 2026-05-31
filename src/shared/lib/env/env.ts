@@ -8,11 +8,12 @@ const fallbackApiBaseUrl = "http://localhost:3000";
 const fromVite = import.meta.env;
 
 const normalizeBaseUrl = (value: string | undefined): string => {
-  if (!value || value.trim().length === 0) {
+  const cleaned = value?.replace(/^\uFEFF/, "").trim();
+  if (!cleaned || cleaned.length === 0) {
     return fallbackApiBaseUrl;
   }
 
-  return value.trim().replace(/\/$/, "");
+  return cleaned.replace(/\/$/, "");
 };
 
 export const env: EnvConfig = Object.freeze({
